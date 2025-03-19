@@ -55,7 +55,6 @@ function CustomFlatList<T>({
       <Animated.FlatList<any>
         {...props}
         ListHeaderComponent={
-          // <-- Header Component
           <Animated.View onLayout={onLayoutHeaderElement}>
             {props.HeaderComponent}
           </Animated.View>

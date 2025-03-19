@@ -1,18 +1,19 @@
 import HomeHeader from "@/components/home/home.header"
-import { Slot, Stack } from "expo-router"
-import { Text, View } from "react-native"
+import { APP_COLOR } from "@/utils/constant"
+import { Stack } from "expo-router"
 
 const RootLayout = () => {
     return (
         <Stack
             screenOptions={{
                 headerStyle: {
-                    backgroundColor: '#f4511e',
+                    backgroundColor: APP_COLOR.GREEN,
                 },
                 headerTintColor: '#fff',
                 headerTitleStyle: {
                     fontWeight: 'bold',
                 },
+                headerTitleAlign: "center"
             }}>
             <Stack.Screen
                 name="index"
@@ -29,15 +30,48 @@ const RootLayout = () => {
             <Stack.Screen
                 name="product/index"
                 options={{ headerTitle: "Sản phẩm" }} />
+
             <Stack.Screen
-                name="environment-status"
+                name="remote-control/index"
                 options={{
-                    // header: () => <HomeHeader />,
                     headerTitle: () => <HomeHeader />,
-                    headerStyle: {
-                        backgroundColor: '#00651f',
-                    }
-                }} />
+                }}
+            />
+
+            <Stack.Screen
+                name="environment-status/index"
+                options={{
+                    headerTitle: () => <HomeHeader />,
+                }}
+            />
+
+            <Stack.Screen
+                name="schedule/index"
+                options={{
+                    headerTitle: () => <HomeHeader />,
+                }}
+            />
+
+            <Stack.Screen
+                name="history/index"
+                options={{
+                    headerTitle: () => <HomeHeader />,
+                }}
+            />
+
+            <Stack.Screen
+                name="script/index"
+                options={{
+                    headerTitle: () => <HomeHeader />,
+                }}
+            />
+
+            <Stack.Screen
+                name="technique/index"
+                options={{
+                    headerTitle: () => <HomeHeader />,
+                }}
+            />
 
             <Stack.Screen
                 name="(auth)/login"
