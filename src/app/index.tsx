@@ -43,11 +43,11 @@ const styles = StyleSheet.create({
 
 })
 const WelcomePage = () => {
-    if (true) {
-        return (
-            <Redirect href={"/(tabs)"} />
-        )
-    }
+    // if (true) {
+    //     return (
+    //         <Redirect href={"/(auth)/verify"} />
+    //     )
+    // }
     return (
         <ImageBackground
             style={{ flex: 1 }}
@@ -122,7 +122,7 @@ const WelcomePage = () => {
                         </View>
                         <View>
                             <ShareButton
-                                title="Đăng nhập với email"
+                                title="Đăng nhập với số điện thoại"
                                 onPress={() => router.navigate("/login")}
                                 textStyle={{ color: "#fff", paddingVertical: 5 }}
                                 buttonStyle={{

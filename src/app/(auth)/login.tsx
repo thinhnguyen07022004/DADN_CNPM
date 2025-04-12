@@ -1,10 +1,12 @@
 import ShareButton from "@/components/button/share.button"
 import SocialButton from "@/components/button/social.button"
 import ShareInput from "@/components/input/share.input"
+import { logInAPI } from "@/utils/api"
 import { APP_COLOR } from "@/utils/constant"
-import { Link } from "expo-router"
+import { Link, router } from "expo-router"
 import { useState } from "react"
 import { StyleSheet, Text, View } from "react-native"
+import Toast from "react-native-root-toast"
 import { SafeAreaView } from "react-native-safe-area-context"
 
 const styles = StyleSheet.create({
@@ -17,8 +19,28 @@ const styles = StyleSheet.create({
 })
 
 const Login = () => {
-    const [email, setEmail] = useState<string>("");
+    const [phoneNumber, setPhoneNumber] = useState<string>("");
     const [password, setPassword] = useState<string>("");
+    const handleLogin = async () => {
+        try {
+            const res = await logInAPI(phoneNumber, password);
+            console.log(">>>>check res:", res)
+            if (res) {
+                router.navigate("/(tabs)")
+            } else {
+                Toast.show("Đăng nhập thất bại", {
+                    duration: Toast.durations.LONG,
+                    textColor: "#fff",
+                    backgroundColor: "red",
+                    opacity: 1,
+                });
+            }
+
+        } catch (error) {
+            console.log(">>>>check error:", error)
+        }
+    }
+
     return (
         <SafeAreaView style={{
             marginVertical: 50,
@@ -34,13 +56,12 @@ const Login = () => {
                     >Đăng nhập</Text>
                 </View>
                 <ShareInput
-                    title="Email"
-                    keyboardType="email-address"
-                    value={email}
-                    setValue={setEmail}
+                    title="Số điện thoại"
+                    value={phoneNumber}
+                    setValue={setPhoneNumber}
                 />
                 <ShareInput
-                    title="Password"
+                    title="Mật khẩu"
                     secureTextEntry={true}
                     value={password}
                     setValue={setPassword}
@@ -48,7 +69,7 @@ const Login = () => {
                 <View style={{ marginVertical: 10 }}></View>
                 <ShareButton
                     title="Đăng nhập"
-                    onPress={() => console.log(email, password)}
+                    onPress={() => handleLogin()}
                     textStyle={{
                         textTransform: "uppercase",
                         color: "#fff",

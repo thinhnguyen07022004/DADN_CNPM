@@ -18,13 +18,20 @@ const styles = StyleSheet.create({
         marginVertical: 10,
     }
 })
-const HomeItems = () => {
+
+interface IProps {
+    title: string;
+    subTitle: string;
+    color?: string;
+}
+const HomeTitle = (props: IProps) => {
+    const { title, subTitle, color = "white" } = props
     return (
         <View style={styles.container}>
-            <Text style={styles.body}>Suga Marketing Farm</Text>
-            <Text style={styles.footer}>Online</Text>
+            <Text style={[styles.body, { color }]}>{title}</Text>
+            <Text style={[styles.footer, { color }]}>{subTitle}</Text>
         </View>
     )
 }
 
-export default HomeItems
+export default HomeTitle

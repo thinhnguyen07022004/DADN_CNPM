@@ -3,8 +3,8 @@ import { ImageBackground, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import bg from "@/assets/home/background_app.png";
 import HomeHeader from "@/components/home/home.header";
-import HomeItems from "@/components/home/home.items";
 import HomeTopList from "@/components/home/home.top.list";
+import HomeTitle from "@/components/home/home.items";
 
 const HomeTab = () => {
 
@@ -16,7 +16,10 @@ const HomeTab = () => {
                     style={styles.list}
                     renderItem={() => <HomeTopList />}
                     HeaderComponent={<HomeHeader />}
-                    StickyElementComponent={<HomeItems />}
+                    StickyElementComponent={<HomeTitle
+                        title="Welcome to HiFarm"
+                        subTitle="Your smart farm management system"
+                    />}
                     TopListElementComponent={<></>}
                 />
             </SafeAreaView>
@@ -30,7 +33,6 @@ const styles = StyleSheet.create({
         overflow: "hidden",
         padding: 8,
         marginHorizontal: 10,
-        flex: 1
     },
     list: {
         overflow: "hidden",

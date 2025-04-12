@@ -12,8 +12,6 @@ type AppRoutes =
     | "/script"
     | "/technique";
 
-// type Href = AppRoutes | { pathname: AppRoutes; params?: Record<string, string> | undefined };
-
 interface GridItem {
     id: string;
     iconName: React.ComponentProps<typeof FontAwesome5>['name']; // Icon name chuẩn FontAwesome5
