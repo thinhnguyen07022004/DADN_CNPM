@@ -21,10 +21,13 @@ const styles = StyleSheet.create({
 const Login = () => {
     const [phoneNumber, setPhoneNumber] = useState<string>("");
     const [password, setPassword] = useState<string>("");
+    const [loading, setLoading] = useState<boolean>(false);
+
     const handleLogin = async () => {
         try {
+            setLoading(true);
             const res = await logInAPI(phoneNumber, password);
-            console.log(">>>>check res:", res)
+            setLoading(false);
             if (res) {
                 router.navigate("/(tabs)")
             } else {
@@ -68,6 +71,7 @@ const Login = () => {
                 />
                 <View style={{ marginVertical: 10 }}></View>
                 <ShareButton
+                    loading={loading}
                     title="Đăng nhập"
                     onPress={() => handleLogin()}
                     textStyle={{

@@ -52,6 +52,13 @@ const RootLayout = () => {
                 />
 
                 <Stack.Screen
+                    name="door/index"
+                    options={{
+                        headerTitle: () => <HomeHeader />,
+                    }}
+                />
+
+                <Stack.Screen
                     name="schedule/index"
                     options={{
                         headerTitle: () => <HomeHeader />,

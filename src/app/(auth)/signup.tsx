@@ -27,7 +27,7 @@ const SignUpPage = () => {
         const url = `${process.env.EXPO_PUBLIC_API_URL}/auth/signup`;
         try {
             const res = await registerAPI(phoneNumber, password, name);
-            if (res.data) {
+            if (res) {
                 router.navigate("/(auth)/verify")
             } else {
                 // const m = Array.isArray(res.message)
