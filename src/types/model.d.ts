@@ -1,11 +1,8 @@
 
 export {};
 declare global {
-    interface IBackendRes<T> {
-        error?: string | string[];
-        message?: string;
-        statusCode?: number | string;
-        data?: T;
+    interface IBackendRes {
+        
     }
 
     interface IRegister {
@@ -13,8 +10,9 @@ declare global {
         phoneNumber: number,
         name: string,
         _id: string,
-        createdAt: Date,
-        updatedAt: Date,
+        createdAt: string,
+        updatedAt: string,
+        error?: string | string[];
     }
 
     interface ILogin {
@@ -22,8 +20,8 @@ declare global {
         id: string,
         phoneNumber: number,
         name: string,
-        createdAt: Date,
-        updatedAt: Date,
+        createdAt: string,
+        updatedAt: string,
     }
 
     interface IConfig{
@@ -36,7 +34,7 @@ declare global {
         updatedAt: Date,
     }
 
-    interface ILightFeed {
+    interface IFeed {
         id: string,
         value: string,
         feed_id: number,
@@ -45,4 +43,5 @@ declare global {
         created_epoch: number,
         expiration: string
     }
+
 }

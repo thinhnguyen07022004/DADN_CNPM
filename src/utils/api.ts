@@ -3,7 +3,7 @@ import { AxiosResponse } from "axios";
 
 const registerAPI = ( phoneNumber: string, password: string, name: string) => {
     const url = `${process.env.EXPO_PUBLIC_API_URL}/auth/signup`;
-    return axios.post(url, { phoneNumber, password, name });
+    return axios.post<IRegister>(url, { phoneNumber, password, name });
 }
 
 const logInAPI = ( phoneNumber: string, password: string) => {
@@ -16,13 +16,46 @@ const getConfigAPI = ( userId: string) => {
     return axios.get<IConfig>(url, { params: { userId } });
 }
 
+const addConfigAPI = ( userId: string, iotName: string, iotApiKey: string) => {
+    const url = `${process.env.EXPO_PUBLIC_API_URL}/config`;
+    return axios.post<IConfig>(url, { userId, iotName, iotApiKey });
+}
+
 const fetchSingleLightFeedAPI = (
     iotName: string,
     apiKey: string,
     limit: number
-): Promise<AxiosResponse<ILightFeed[]>> => {
+): Promise<AxiosResponse<IFeed[]>> => {
     const url = `${process.env.EXPO_PUBLIC_ADAFRUIT_API_URL}/${iotName}/feeds/lightfeed/data`;
-    return axios.get<ILightFeed[]>(url, {
+    return axios.get<IFeed[]>(url, {
+    headers: {
+        "X-AIO-Key": apiKey,
+    },
+    params: { limit },
+});
+};
+
+const fetchSingleTemperatureFeedAPI = (
+    iotName: string,
+    apiKey: string,
+    limit: number
+): Promise<AxiosResponse<IFeed[]>> => {
+    const url = `${process.env.EXPO_PUBLIC_ADAFRUIT_API_URL}/${iotName}/feeds/temperaturefeed/data`;
+    return axios.get<IFeed[]>(url, {
+    headers: {
+        "X-AIO-Key": apiKey,
+    },
+    params: { limit },
+});
+};
+
+const fetchSingleHumidityFeedAPI = (
+    iotName: string,
+    apiKey: string,
+    limit: number
+): Promise<AxiosResponse<IFeed[]>> => {
+    const url = `${process.env.EXPO_PUBLIC_ADAFRUIT_API_URL}/${iotName}/feeds/humidityfeed/data`;
+    return axios.get<IFeed[]>(url, {
     headers: {
         "X-AIO-Key": apiKey,
     },
@@ -33,7 +66,7 @@ const fetchSingleLightFeedAPI = (
 export {
     registerAPI,
     logInAPI,
-    getConfigAPI,
-    fetchSingleLightFeedAPI
+    getConfigAPI, addConfigAPI,
+    fetchSingleLightFeedAPI, fetchSingleTemperatureFeedAPI, fetchSingleHumidityFeedAPI
 }
 

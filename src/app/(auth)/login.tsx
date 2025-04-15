@@ -38,6 +38,12 @@ const Login = () => {
                     setConfig(config);
                 }
                 router.navigate("/(tabs)")
+                Toast.show("Đăng nhập thành công", {
+                    duration: Toast.durations.LONG,
+                    textColor: "#fff",
+                    backgroundColor: APP_COLOR.GREEN,
+                    opacity: 1,
+                });
             } else {
                 Toast.show("Đăng nhập thất bại", {
                     duration: Toast.durations.LONG,

@@ -8,6 +8,7 @@ import { StyleSheet, Text, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import Toast from 'react-native-root-toast';
 import { registerAPI } from "@/utils/api"
+import { useCurrentApp } from "@/context/app.context"
 
 const styles = StyleSheet.create({
     contanier: {
@@ -19,19 +20,38 @@ const styles = StyleSheet.create({
 })
 
 const SignUpPage = () => {
+    const { setAppState } = useCurrentApp()
     const [name, setName] = useState<string>("");
     const [phoneNumber, setPhoneNumber] = useState<string>("");
     const [password, setPassword] = useState<string>("");
+    const [loading, setLoading] = useState<boolean>(false);
+
 
     const handleSignUp = async () => {
-        const url = `${process.env.EXPO_PUBLIC_API_URL}/auth/signup`;
         try {
+            setLoading(true);
             const res = await registerAPI(phoneNumber, password, name);
+            setLoading(false);
+            if (res && res.error) {
+                Toast.show("Số điện thoại đã được đăng ký", {
+                    duration: Toast.durations.LONG,
+                    textColor: "#fff",
+                    backgroundColor: "red",
+                    opacity: 1,
+                });
+                return;
+            };
             if (res) {
+                setAppState(res)
+                console.log(res)
                 router.navigate("/(auth)/verify")
+                Toast.show("Đăng ký thành công", {
+                    duration: Toast.durations.LONG,
+                    textColor: "#fff",
+                    backgroundColor: APP_COLOR.GREEN,
+                    opacity: 1,
+                });
             } else {
-                // const m = Array.isArray(res.message)
-                //     ? res.message[0] : res.message;
                 Toast.show("Đăng ký thất bại", {
                     duration: Toast.durations.LONG,
                     textColor: "#fff",
