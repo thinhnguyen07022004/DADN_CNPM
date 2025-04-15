@@ -8,8 +8,9 @@ type AppRoutes =
     | "/remote-control"
     | "/environment-status"
     | "/schedule"
-    | "/history"
+    | "/fan-control"
     | "/report"
+    | "/report-table"
     | "/technique";
 
 interface GridItem {
@@ -23,10 +24,12 @@ interface GridItem {
 const gridItems: GridItem[] = [
     { id: "1", iconName: "remote", label: "Remote Control", href: "/remote-control" },
     { id: "2", iconName: "leaf", label: "Environment Status", href: "/environment-status" },
-    { id: "3", iconName: "door-closed", label: "Door Controls", href: "/door" },
-    { id: "4", iconName: "history", label: "History", href: "/history" },
-    { id: "5", iconName: "chart-bar", label: "Data Chart", href: "/report" },
-    { id: "6", iconName: "cogs", label: "Technique", href: "/technique" },
+    { id: "3", iconName: "chart-bar", label: "Data Chart", href: "/report" },
+    { id: "4", iconName: "table", label: "Data Table", href: "/report-table" },
+    { id: "5", iconName: "door-closed", label: "Door Controls", href: "/door" },
+    { id: "6", iconName: "fan", label: "Fan Controls", href: "/fan-control" },
+    { id: "7", iconName: "lightbulb", label: "Light Controls", href: "/light-control" },
+    { id: "8", iconName: "cogs", label: "Technique", href: "/technique" },
 ];
 
 const HomeTopList = () => {

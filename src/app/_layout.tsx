@@ -36,10 +36,6 @@ const RootLayout = () => {
                         options={{ headerShown: false }} />
 
                     <Stack.Screen
-                        name="product/index"
-                        options={{ headerTitle: "Sản phẩm" }} />
-
-                    <Stack.Screen
                         name="remote-control/index"
                         options={{
                             headerTitle: () => <HomeHeader />,
@@ -61,20 +57,6 @@ const RootLayout = () => {
                     />
 
                     <Stack.Screen
-                        name="schedule/index"
-                        options={{
-                            headerTitle: () => <HomeHeader />,
-                        }}
-                    />
-
-                    <Stack.Screen
-                        name="history/index"
-                        options={{
-                            headerTitle: () => <HomeHeader />,
-                        }}
-                    />
-
-                    <Stack.Screen
                         name="report/index"
                         options={{
                             headerTitle: () => <HomeHeader />,
@@ -83,6 +65,13 @@ const RootLayout = () => {
 
                     <Stack.Screen
                         name="technique/index"
+                        options={{
+                            headerTitle: () => <HomeHeader />,
+                        }}
+                    />
+
+                    <Stack.Screen
+                        name="fan-control/index"
                         options={{
                             headerTitle: () => <HomeHeader />,
                         }}

@@ -48,7 +48,6 @@ const EnvironmentScreen = () => {
         <View style={styles.container}>
             <Text style={styles.title}>Environment Controls</Text>
 
-            {/* Danh sách plot dạng phân trang */}
             <FlatList
                 data={pages}
                 horizontal

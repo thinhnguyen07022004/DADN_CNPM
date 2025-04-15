@@ -1,11 +1,11 @@
-import { Text, View } from "react-native"
+import { Text, View } from "react-native";
 
 const ProductPage = () => {
     return (
         <View>
-            <Text>Product Page</Text>
+            <Text>Technique</Text>
         </View>
-    )
-}
+    );
+};
 
-export default ProductPage
+export default ProductPage;
