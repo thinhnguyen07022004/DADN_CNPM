@@ -22,18 +22,22 @@ const AccountPage = () => {
                     <ShareInput
                         title="Họ và tên"
                         value={appState?.name}
+                        disabled={true}
                     />
                     <ShareInput
                         title="Iot Name"
                         value={config?.iotName}
+                        disabled={true}
                     />
                     <ShareInput
                         title="Iot Api Key"
                         value={config?.iotApiKey}
+                        disabled={true}
                     />
                     <ShareInput
                         title="Số điện thoại"
                         value={appState?.phoneNumber?.toString()}
+                        disabled={true}
                     />
                 </View>
             </View>

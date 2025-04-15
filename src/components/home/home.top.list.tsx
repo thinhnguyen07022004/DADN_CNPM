@@ -3,14 +3,13 @@ import { FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { APP_COLOR } from "@/utils/constant";
-import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
 
 type AppRoutes =
     | "/remote-control"
     | "/environment-status"
     | "/schedule"
     | "/history"
-    | "/script"
+    | "/report"
     | "/technique";
 
 interface GridItem {
@@ -26,7 +25,7 @@ const gridItems: GridItem[] = [
     { id: "2", iconName: "leaf", label: "Environment Status", href: "/environment-status" },
     { id: "3", iconName: "door-closed", label: "Door Controls", href: "/door" },
     { id: "4", iconName: "history", label: "History", href: "/history" },
-    { id: "5", iconName: "scroll", label: "Script", href: "/script" },
+    { id: "5", iconName: "chart-bar", label: "Data Chart", href: "/report" },
     { id: "6", iconName: "cogs", label: "Technique", href: "/technique" },
 ];
 

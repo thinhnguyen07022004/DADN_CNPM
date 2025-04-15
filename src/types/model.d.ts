@@ -35,4 +35,14 @@ declare global {
         createdAt: Date,
         updatedAt: Date,
     }
+
+    interface ILightFeed {
+        id: string,
+        value: string,
+        feed_id: number,
+        feed_key: string,
+        created_at: string,
+        created_epoch: number,
+        expiration: string
+    }
 }

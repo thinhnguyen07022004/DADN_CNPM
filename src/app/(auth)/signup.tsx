@@ -41,7 +41,12 @@ const SignUpPage = () => {
             }
 
         } catch (error) {
-            console.log(">>>>check error:", error)
+            Toast.show("Đăng ký thất bại", {
+                duration: Toast.durations.LONG,
+                textColor: "#fff",
+                backgroundColor: "red",
+                opacity: 1,
+            });
         }
     }
 

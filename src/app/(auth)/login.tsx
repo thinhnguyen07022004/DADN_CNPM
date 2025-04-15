@@ -25,20 +25,6 @@ const Login = () => {
     const [loading, setLoading] = useState<boolean>(false);
     const { appState, setAppState, setConfig } = useCurrentApp()
 
-    // useEffect(() => {
-    //     const fetchConfig = async () => {
-    //         if (appState?.id) {
-    //             const res = await getConfigAPI(appState.id);
-    //             console.log("res config:", res)
-    //             if (res) {
-    //                 setConfig(res)
-    //             } else {
-    //                 console.warn("Config is undefined")
-    //             }
-    //         }
-    //     }
-    //     fetchConfig()
-    // }, [appState])
 
     const handleLogin = async () => {
         try {
@@ -47,9 +33,7 @@ const Login = () => {
             setLoading(false);
             if (res) {
                 setAppState(res)
-                console.log("res:", res.id)
                 const config = await getConfigAPI(res.id);
-                console.log("res config:", config)
                 if (config) {
                     setConfig(config);
                 }
@@ -64,7 +48,12 @@ const Login = () => {
             }
 
         } catch (error) {
-            console.log(">>>>check error:", error)
+            Toast.show("Đăng nhập thất bại", {
+                duration: Toast.durations.LONG,
+                textColor: "#fff",
+                backgroundColor: "red",
+                opacity: 1,
+            });
         }
     }
 

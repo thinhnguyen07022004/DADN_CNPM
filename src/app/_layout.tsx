@@ -75,7 +75,7 @@ const RootLayout = () => {
                     />
 
                     <Stack.Screen
-                        name="script/index"
+                        name="report/index"
                         options={{
                             headerTitle: () => <HomeHeader />,
                         }}

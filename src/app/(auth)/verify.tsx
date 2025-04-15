@@ -21,27 +21,6 @@ const VerifyPage = () => {
     const [iotName, setIotName] = useState<string>("");
     const [iotApiKey, setIotApiKey] = useState<string>("");
 
-    // const handleSignUp = async () => {
-    //     const url = `${process.env.EXPO_PUBLIC_API_URL}/auth/signup`;
-    //     try {
-    //         const res = await registerAPI(phoneNumber, password, name);
-    //         if (res.data) {
-    //             router.navigate("/(auth)/verify")
-    //         } else {
-    //             // const m = Array.isArray(res.message)
-    //             //     ? res.message[0] : res.message;
-    //             Toast.show("Đăng ký thất bại", {
-    //                 duration: Toast.durations.LONG,
-    //                 textColor: "#fff",
-    //                 backgroundColor: "red",
-    //                 opacity: 1,
-    //             });
-    //         }
-
-    //     } catch (error) {
-    //         console.log(">>>>check error:", error)
-    //     }
-    // }
     return (
         <SafeAreaView style={{ flex: 1 }}>
             <View style={styles.contanier}>

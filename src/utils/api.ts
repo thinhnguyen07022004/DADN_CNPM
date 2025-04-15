@@ -1,4 +1,5 @@
 import axios from "@/utils/axios.customize";
+import { AxiosResponse } from "axios";
 
 const registerAPI = ( phoneNumber: string, password: string, name: string) => {
     const url = `${process.env.EXPO_PUBLIC_API_URL}/auth/signup`;
@@ -15,9 +16,24 @@ const getConfigAPI = ( userId: string) => {
     return axios.get<IConfig>(url, { params: { userId } });
 }
 
+const fetchSingleLightFeedAPI = (
+    iotName: string,
+    apiKey: string,
+    limit: number
+): Promise<AxiosResponse<ILightFeed[]>> => {
+    const url = `${process.env.EXPO_PUBLIC_ADAFRUIT_API_URL}/${iotName}/feeds/lightfeed/data`;
+    return axios.get<ILightFeed[]>(url, {
+    headers: {
+        "X-AIO-Key": apiKey,
+    },
+    params: { limit },
+});
+};
+
 export {
     registerAPI,
     logInAPI,
-    getConfigAPI
+    getConfigAPI,
+    fetchSingleLightFeedAPI
 }
 

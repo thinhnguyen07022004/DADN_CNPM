@@ -30,13 +30,14 @@ interface IProps {
     keyboardType?: KeyboardTypeOptions,
     secureTextEntry?: boolean,
     value: any,
-    setValue?: (v: any) => void
+    setValue?: (v: any) => void,
+    disabled?: boolean;
 
 }
 
 const ShareInput = (props: IProps) => {
     const { title, keyboardType, secureTextEntry = false,
-        value, setValue
+        value, setValue, disabled = false
     } = props
     const [isFocus, setIsFocus] = useState<boolean>(false)
     const [isShowPassword, setIsShowPassword] = useState<boolean>(false)
@@ -45,6 +46,7 @@ const ShareInput = (props: IProps) => {
             <Text style={styles.InputText}>{title}</Text>
             <View>
                 <TextInput
+                    editable={!disabled}
                     value={value}
                     onChangeText={(text) => setValue && setValue(text)}
                     onFocus={() => setIsFocus(true)}
