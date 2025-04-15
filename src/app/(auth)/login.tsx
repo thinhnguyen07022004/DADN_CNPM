@@ -1,10 +1,11 @@
 import ShareButton from "@/components/button/share.button"
 import SocialButton from "@/components/button/social.button"
 import ShareInput from "@/components/input/share.input"
-import { logInAPI } from "@/utils/api"
+import { useCurrentApp } from "@/context/app.context"
+import { getConfigAPI, logInAPI } from "@/utils/api"
 import { APP_COLOR } from "@/utils/constant"
 import { Link, router } from "expo-router"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { StyleSheet, Text, View } from "react-native"
 import Toast from "react-native-root-toast"
 import { SafeAreaView } from "react-native-safe-area-context"
@@ -22,6 +23,22 @@ const Login = () => {
     const [phoneNumber, setPhoneNumber] = useState<string>("");
     const [password, setPassword] = useState<string>("");
     const [loading, setLoading] = useState<boolean>(false);
+    const { appState, setAppState, setConfig } = useCurrentApp()
+
+    // useEffect(() => {
+    //     const fetchConfig = async () => {
+    //         if (appState?.id) {
+    //             const res = await getConfigAPI(appState.id);
+    //             console.log("res config:", res)
+    //             if (res) {
+    //                 setConfig(res)
+    //             } else {
+    //                 console.warn("Config is undefined")
+    //             }
+    //         }
+    //     }
+    //     fetchConfig()
+    // }, [appState])
 
     const handleLogin = async () => {
         try {
@@ -29,6 +46,13 @@ const Login = () => {
             const res = await logInAPI(phoneNumber, password);
             setLoading(false);
             if (res) {
+                setAppState(res)
+                console.log("res:", res.id)
+                const config = await getConfigAPI(res.id);
+                console.log("res config:", config)
+                if (config) {
+                    setConfig(config);
+                }
                 router.navigate("/(tabs)")
             } else {
                 Toast.show("Đăng nhập thất bại", {

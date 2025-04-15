@@ -16,4 +16,23 @@ declare global {
         createdAt: Date,
         updatedAt: Date,
     }
+
+    interface ILogin {
+        _id: string,
+        id: string,
+        phoneNumber: number,
+        name: string,
+        createdAt: Date,
+        updatedAt: Date,
+    }
+
+    interface IConfig{
+        _id: string,
+        id: string,
+        iotName: string,
+        iotApiKey: string,
+        userId: string,
+        createdAt: Date,
+        updatedAt: Date,
+    }
 }

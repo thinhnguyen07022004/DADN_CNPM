@@ -30,7 +30,7 @@ interface IProps {
     keyboardType?: KeyboardTypeOptions,
     secureTextEntry?: boolean,
     value: any,
-    setValue: (v: any) => void
+    setValue?: (v: any) => void
 
 }
 
@@ -46,7 +46,7 @@ const ShareInput = (props: IProps) => {
             <View>
                 <TextInput
                     value={value}
-                    onChangeText={(text) => setValue(text)}
+                    onChangeText={(text) => setValue && setValue(text)}
                     onFocus={() => setIsFocus(true)}
                     onBlur={() => setIsFocus(false)}
                     keyboardType={keyboardType}

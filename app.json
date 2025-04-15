@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "RN-basic-hoidanit",
-    "slug": "RN-basic-hoidanit",
+    "name": "RN-smart-farm",
+    "slug": "RN-smart-farm",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "././src/assets/icon.png",
@@ -23,7 +23,7 @@
     "web": {
       "favicon": "././src/assets/favicon.png"
     },
-    "scheme": "hoidanit-app",
+    "scheme": "smart-farm-app",
     "plugins": [
     "expo-router"
     ],
