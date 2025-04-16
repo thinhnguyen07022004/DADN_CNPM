@@ -1,243 +1,369 @@
-import React, { useState } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
-import { MaterialIcons } from "@expo/vector-icons";
-import ShareButton from "@/components/button/share.button";
+import React, { useEffect, useState, memo } from "react";
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, ActivityIndicator, TextInput } from "react-native";
+import { FontAwesome5 } from "@expo/vector-icons";
+import { useCurrentApp } from "@/context/app.context";
 import { APP_COLOR } from "@/utils/constant";
+import { getDoorAPI, updateDoorAPI } from "@/utils/api";
+import Toast from "react-native-root-toast";
 
-const DoorControlPage = () => {
-    const [activeTab, setActiveTab] = useState("ViewInfo");
+interface IDoor {
+    _id: string;
+    deviceId: string;
+    configId: string;
+    doorPassword: string;
+    createdAt: string;
+    updatedAt: string;
+    formattedCreatedAt?: string;
+    formattedExpiration?: string;
+}
 
-    // Giả lập dữ liệu door
-    const doorData = [
-        {
-            _id: "67f524709d038e32b7f7f2ee",
-            deviceId: "e8bb95b2-a275-4278-aeb5-5b4135b2970a",
-            configId: "7d858f06-2898-4a40-b4c9-25e2f701db09",
-            doorPassword: "142536",
-            createdAt: "2025-04-08T13:28:16.707Z",
-            updatedAt: "2025-04-08T13:39:38.831Z",
-        },
-        {
-            _id: "67f524709d038e32b7f7f2ee",
-            deviceId: "e8bb95b2-a275-4278-aeb5-5b4135b2970a",
-            configId: "7d858f06-2898-4a40-b4c9-25e2f701db09",
-            doorPassword: "142536",
-            createdAt: "2025-04-08T13:28:16.707Z",
-            updatedAt: "2025-04-08T13:39:38.831Z",
-        },
-        {
-            _id: "67f524709d038e32b7f7f2ee",
-            deviceId: "e8bb95b2-a275-4278-aeb5-5b4135b2970a",
-            configId: "7d858f06-2898-4a40-b4c9-25e2f701db09",
-            doorPassword: "142536",
-            createdAt: "2025-04-08T13:28:16.707Z",
-            updatedAt: "2025-04-08T13:39:38.831Z",
-        },
-        {
-            _id: "67f524709d038e32b7f7f2ee",
-            deviceId: "e8bb95b2-a275-4278-aeb5-5b4135b2970a",
-            configId: "7d858f06-2898-4a40-b4c9-25e2f701db09",
-            doorPassword: "142536",
-            createdAt: "2025-04-08T13:28:16.707Z",
-            updatedAt: "2025-04-08T13:39:38.831Z",
-        },
-        {
-            _id: "67f524709d038e32b7f7f2ee",
-            deviceId: "e8bb95b2-a275-4278-aeb5-5b4135b2970a",
-            configId: "7d858f06-2898-4a40-b4c9-25e2f701db09",
-            doorPassword: "142536",
-            createdAt: "2025-04-08T13:28:16.707Z",
-            updatedAt: "2025-04-08T13:39:38.831Z",
-        },
-        {
-            _id: "67f524709d038e32b7f7f2ee",
-            deviceId: "e8bb95b2-a275-4278-aeb5-5b4135b2970a",
-            configId: "7d858f06-2898-4a40-b4c9-25e2f701db09",
-            doorPassword: "142536",
-            createdAt: "2025-04-08T13:28:16.707Z",
-            updatedAt: "2025-04-08T13:39:38.831Z",
-        },
-    ];
+const formatFeedData = (data: IDoor[]): IDoor[] => {
+    return data.map((item) => ({
+        ...item,
+        formattedCreatedAt: new Date(item.createdAt).toLocaleString(),
+        formattedExpiration: new Date(item.updatedAt).toLocaleString(),
+    }));
+};
+
+const FeedItem = memo(({ item }: { item: IDoor }) => (
+    <View style={styles.card}>
+        <View style={styles.infoRow}>
+            <FontAwesome5 name="door-open" size={20} color={APP_COLOR.ORANGE} style={styles.icon} />
+            <Text style={styles.infoLabel}>Pass Word</Text>
+            <Text style={styles.infoValueBlue}>{item.doorPassword}</Text>
+        </View>
+        <View style={styles.infoRow}>
+            <FontAwesome5 name="clock" size={20} color={APP_COLOR.GREEN} style={styles.icon} />
+            <Text style={styles.infoLabel}>Created At</Text>
+            <Text style={styles.infoValueGreen}>{item.formattedCreatedAt}</Text>
+        </View>
+        <View style={styles.infoRow}>
+            <FontAwesome5 name="hourglass-end" size={20} color={APP_COLOR.GREEN} style={styles.icon} />
+            <Text style={styles.infoLabel}>Updated At</Text>
+            <Text style={styles.infoValueGreen}>{item.formattedExpiration}</Text>
+        </View>
+    </View>
+));
+
+FeedItem.displayName = "FeedItem";
+
+const DoorDataPage = () => {
+    const { config } = useCurrentApp();
+    const [doorData, setDoorData] = useState<IDoor[]>([]);
+    const [allDoorData, setAllDoorData] = useState<IDoor[]>([]);
+    const [loading, setLoading] = useState(false);
+    const [loadingMore, setLoadingMore] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [activeTab, setActiveTab] = useState<"view" | "reset">("view");
+    const [newPassword, setNewPassword] = useState("");
+    const [resetLoading, setResetLoading] = useState(false);
+
+    const itemsPerPage = 50;
+
+    useEffect(() => {
+        const fetchData = async () => {
+            setLoading(true);
+            setError(null);
+            if (!config?.id) {
+                Toast.show("Người dùng chưa cấu hình tài khoản", {
+                    duration: Toast.durations.LONG,
+                    textColor: "#fff",
+                    backgroundColor: "red",
+                    opacity: 1,
+                });
+                setLoading(false);
+                return;
+            }
+            try {
+                const res = await getDoorAPI(config?.id);
+                const formatted = Array.isArray(res) ? formatFeedData(res) : [];
+                setAllDoorData(formatted);
+                setDoorData(formatted.slice(0, itemsPerPage));
+            } catch (err) {
+                Toast.show("Không thể tải dữ liệu cửa. Vui lòng kiểm tra kết nối.", {
+                    duration: Toast.durations.LONG,
+                    textColor: "#fff",
+                    backgroundColor: "red",
+                    opacity: 1,
+                });
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchData();
+    }, []);
+
+    const handleResetPassword = async () => {
+        if (!config?.id) {
+            Toast.show("Người dùng chưa cấu hình tài khoản", {
+                duration: Toast.durations.LONG,
+                textColor: "#fff",
+                backgroundColor: "red",
+                opacity: 1,
+            });
+            return;
+        }
+
+        if (!newPassword.trim()) {
+            Toast.show("Vui lòng nhập mật khẩu mới", {
+                duration: Toast.durations.LONG,
+                textColor: "#fff",
+                backgroundColor: "red",
+                opacity: 1,
+            });
+            return;
+        }
+
+        if (!/^\d{6}$/.test(newPassword)) {
+            Toast.show("Vui lòng nhập mật khẩu phải là 6 chữ số", {
+                duration: Toast.durations.LONG,
+                textColor: "#fff",
+                backgroundColor: "red",
+                opacity: 1,
+            });
+            return;
+        }
+
+        const currentPassword = allDoorData.length > 0 ? allDoorData[0].doorPassword : null;
+        if (currentPassword && newPassword === currentPassword) {
+            Toast.show("Mật khẩu mới không được trùng với mật khẩu hiện tại", {
+                duration: Toast.durations.LONG,
+                textColor: "#fff",
+                backgroundColor: "red",
+                opacity: 1,
+            });
+            return;
+        }
+
+        try {
+            setResetLoading(true);
+            await updateDoorAPI(config.id, newPassword);
+            Toast.show("Cập nhật mật khẩu cửa thành công!", {
+                duration: Toast.durations.LONG,
+                textColor: "#fff",
+                backgroundColor: APP_COLOR.GREEN,
+                opacity: 1,
+            });
+            setNewPassword("");
+            const res = await getDoorAPI(config.id);
+            const formatted = Array.isArray(res) ? formatFeedData(res) : [];
+            setAllDoorData(formatted);
+            setDoorData(formatted.slice(0, itemsPerPage));
+        } catch (err: any) {
+            Toast.show(`Lỗi khi cập nhật mật khẩu: ${err.message}`, {
+                duration: Toast.durations.LONG,
+                textColor: "#fff",
+                backgroundColor: "red",
+                opacity: 1,
+            });
+        } finally {
+            setActiveTab("view");
+            setResetLoading(false);
+        }
+    };
+
+    const renderviewTab = () => {
+        return loading ? (
+            <ActivityIndicator size="large" color="#FFFFFF" style={styles.loader} />
+        ) : error ? (
+            <Text style={styles.errorText}>{error}</Text>
+        ) : doorData.length > 0 ? (
+            <FlatList
+                data={doorData}
+                renderItem={({ item }) => <FeedItem item={item} />}
+                keyExtractor={(item) => item._id}
+                onEndReachedThreshold={0.5}
+                ListFooterComponent={
+                    loadingMore ? (
+                        <ActivityIndicator size="small" color="#FFFFFF" style={styles.loaderMore} />
+                    ) : <View style={{ height: 20 }} />
+                }
+            />
+        ) : (
+            <Text style={styles.noDataText}>Không có dữ liệu cửa để hiển thị.</Text>
+        );
+    };
+
+    const renderresetTab = () => {
+        return (
+            <View style={styles.resetContainer}>
+                <Text style={styles.resetTitle}>Reset door's password</Text>
+                <TextInput
+                    style={styles.input}
+                    value={newPassword}
+                    onChangeText={setNewPassword}
+                    placeholder="Please enter 6 digit password"
+                    placeholderTextColor="#B0BEC5"
+                    secureTextEntry
+                    keyboardType="numeric"
+                    maxLength={6}
+                />
+                <TouchableOpacity
+                    style={[styles.resetButton, resetLoading && styles.resetButtonDisabled]}
+                    onPress={handleResetPassword}
+                    disabled={resetLoading}
+                >
+                    <Text style={styles.resetButtonText}>
+                        {resetLoading ? "Updating..." : "Update Password"}
+                    </Text>
+                </TouchableOpacity>
+            </View>
+        );
+    };
 
     return (
         <View style={styles.container}>
-            <Text style={styles.header}>Door Controls</Text>
+            <Text style={styles.title}>Door Controls</Text>
 
-            {/* Tabs */}
             <View style={styles.tabContainer}>
                 <TouchableOpacity
-                    style={[styles.tab, activeTab === "ViewInfo" && styles.activeTab]}
-                    onPress={() => setActiveTab("ViewInfo")}
+                    style={[styles.tabButton, activeTab === "view" && styles.tabActive]}
+                    onPress={() => setActiveTab("view")}
                 >
-                    <Text style={styles.tabText}>View Information</Text>
+                    <Text style={[styles.tabText, activeTab === "view" && styles.tabTextActive]}>View Information</Text>
                 </TouchableOpacity>
-
                 <TouchableOpacity
-                    style={[styles.tab, activeTab === "Actions" && styles.activeTab]}
-                    onPress={() => setActiveTab("Actions")}
+                    style={[styles.tabButton, activeTab === "reset" && styles.tabActive]}
+                    onPress={() => setActiveTab("reset")}
                 >
-                    <Text style={styles.tabText}>Reset Password</Text>
+                    <Text style={[styles.tabText, activeTab === "reset" && styles.tabTextActive]}>Reset Password</Text>
                 </TouchableOpacity>
             </View>
 
-            {/* View Info Tab */}
-            {activeTab === "ViewInfo" && (
-                <ScrollView style={{ marginTop: 10 }}>
-                    {doorData.map((door, index) => (
-                        <View key={door._id + index} style={styles.infoBox}>
-                            <Text style={styles.infoText}>
-                                <Text style={styles.label}>Device ID:</Text> {door.deviceId}
-                            </Text>
-                            <Text style={styles.infoText}>
-                                <Text style={styles.label}>Door Password:</Text> {door.doorPassword}
-                            </Text>
-                            <Text style={styles.infoText}>
-                                <Text style={styles.label}>Created At:</Text> {new Date(door.createdAt).toLocaleString()}
-                            </Text>
-                            <Text style={styles.infoText}>
-                                <Text style={styles.label}>Updated At:</Text> {new Date(door.updatedAt).toLocaleString()}
-                            </Text>
-                            <Text style={styles.infoText}>
-                                <Text style={styles.label}>Config ID:</Text> {door.configId}
-                            </Text>
-                        </View>
-                    ))}
-                </ScrollView>
-            )}
-
-            {activeTab === "Actions" && (
-                <ScrollView style={{ marginTop: 10 }}>
-                    <View style={styles.list}>
-                        {doorData.map((door, index) => (
-                            <View key={door._id + index} style={styles.conditionRow}>
-                                <View>
-                                    <Text style={styles.conditionText}>Door ID: {door.deviceId}</Text>
-                                </View>
-
-                                <View style={styles.actionButtonsRow}>
-                                    <ShareButton
-                                        title="Reset Password"
-                                        onPress={() => console.log("Reset Password")}
-                                        buttonStyle={[styles.icon]}
-                                        textStyle={{ color: "white" }}
-                                    />
-                                </View>
-                            </View>
-                        ))}
-                    </View>
-                </ScrollView>
-            )}
-
-
-            {/* Add New Door Button */}
-
+            {activeTab === "view" ? renderviewTab() : renderresetTab()}
         </View>
     );
 };
 
-export default DoorControlPage;
-
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        padding: 16,
-        paddingTop: 50,
-        backgroundColor: "white",
+        paddingTop: 20,
     },
-    header: {
-        fontSize: 20,
+    title: {
+        fontSize: 22,
+        color: APP_COLOR.GREEN,
         fontWeight: "bold",
+        marginLeft: 16,
         marginBottom: 16,
+    },
+    card: {
+        backgroundColor: "#FFFFFF",
+        borderRadius: 12,
+        padding: 12,
+        marginHorizontal: 16,
+        marginBottom: 12,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 3,
+    },
+    infoRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        backgroundColor: "#F8F8F8",
+        borderRadius: 8,
+        padding: 8,
+        marginBottom: 8,
+    },
+    icon: {
+        width: 30,
+        textAlign: "center",
+    },
+    infoLabel: {
+        flex: 1,
+        fontSize: 14,
+        color: "#555",
+    },
+    infoValueBlue: {
+        fontSize: 16,
+        fontWeight: "bold",
+        color: APP_COLOR.ORANGE,
+    },
+    infoValueGreen: {
+        fontSize: 16,
+        fontWeight: "bold",
+        color: "#388E3C",
+    },
+    loader: {
+        marginTop: 20,
+    },
+    loaderMore: {
+        marginVertical: 10,
+    },
+    noDataText: {
+        fontSize: 16,
+        color: "#FFFFFF",
+        textAlign: "center",
+        marginTop: 20,
+    },
+    errorText: {
+        fontSize: 16,
+        color: "#FFEBEE",
+        textAlign: "center",
+        marginTop: 20,
     },
     tabContainer: {
         flexDirection: "row",
-        marginBottom: 10,
-        backgroundColor: "#f1f1f1",
-        borderRadius: 8,
+        marginHorizontal: 16,
+        marginBottom: 12,
+        backgroundColor: "#eee",
+        borderRadius: 10,
+        overflow: "hidden",
     },
-    tab: {
+    tabButton: {
         flex: 1,
         paddingVertical: 10,
         alignItems: "center",
+        backgroundColor: APP_COLOR.GREY,
     },
-    activeTab: {
-        backgroundColor: "#27ae60",
-        borderRadius: 8,
+    tabActive: {
+        backgroundColor: APP_COLOR.GREEN,
     },
     tabText: {
-        color: "white",
-        fontWeight: "bold",
-        flexDirection: "column",
-        alignItems: "center",
-    },
-    addBtn: {
-        backgroundColor: "#ededed",
-        paddingVertical: 12,
-        alignItems: "center",
-        borderRadius: 6,
-        marginBottom: 10,
-    },
-    addText: {
-        color: "#333",
-        fontWeight: "500",
-    },
-    list: {
-        marginTop: 5,
-        gap: 10,
-
-    },
-    conditionRow: {
-        flexDirection: "column",
-        justifyContent: "space-between",
-        backgroundColor: "#f9f9f9",
-        padding: 20,
-        borderBottomColor: "#ccc",
-        borderBottomWidth: 1,
-        gap: 15,
-        alignItems: "center",
-        borderRadius: 8,
-        // borderWidth: 0.2,
-    },
-    conditionText: {
-        fontSize: 16,
-    },
-    actionIcons: {
-        flexDirection: "row",
-    },
-    icon: {
-        backgroundColor: "#2ecc71",
-        padding: 6,
-        borderRadius: 4,
-        marginLeft: 8,
-    },
-    deleteIcon: {
-        backgroundColor: "#f39c12",
-    },
-    infoBox: {
-        backgroundColor: "#f9f9f9",
-        borderRadius: 8,
-        padding: 16,
-        marginTop: 10,
-        elevation: 1,
-    },
-    infoText: {
-        fontSize: 16,
-        marginBottom: 8,
+        fontSize: 14,
         color: "#333",
     },
-    label: {
+    tabTextActive: {
+        color: "#FFF",
         fontWeight: "bold",
-        color: "#000",
     },
-    actionButtonsRow: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        marginTop: 10,
-        gap: 12,
+    resetContainer: {
+        paddingHorizontal: 16,
+        marginTop: 20,
     },
-
-    buttonFlex: {
-        flex: 1,
+    resetTitle: {
+        fontSize: 18,
+        color: APP_COLOR.GREEN,
+        fontWeight: "bold",
+        marginBottom: 16,
+    },
+    input: {
+        backgroundColor: "#FFFFFF",
+        borderRadius: 8,
+        padding: 12,
+        fontSize: 16,
+        color: "#333",
+        marginBottom: 16,
+        borderWidth: 1,
+        borderColor: "#B0BEC5",
+    },
+    resetButton: {
+        backgroundColor: APP_COLOR.GREEN,
+        borderRadius: 8,
+        padding: 12,
         alignItems: "center",
+    },
+    resetButtonDisabled: {
+        backgroundColor: "#B0BEC5",
+        opacity: 0.7,
+    },
+    resetButtonText: {
+        fontSize: 16,
+        color: "#FFF",
+        fontWeight: "bold",
     },
 });
+
+export default DoorDataPage;

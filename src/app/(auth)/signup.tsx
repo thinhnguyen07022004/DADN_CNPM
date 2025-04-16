@@ -43,7 +43,6 @@ const SignUpPage = () => {
             };
             if (res) {
                 setAppState(res)
-                console.log(res)
                 router.navigate("/(auth)/verify")
                 Toast.show("Đăng ký thành công", {
                     duration: Toast.durations.LONG,

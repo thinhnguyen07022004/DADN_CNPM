@@ -76,4 +76,24 @@ declare global {
         fanOns: FanOn[];
     }
 
+    interface IDoor {
+        _id: string;
+        deviceId: string;
+        doorPassword: string;
+        configId: string;
+        createdAt: string;
+        updatedAt: string;
+    }
+
+    interface lightOns {
+        color: string;
+        threshold: string;
+    }
+
+    interface mistingOns {
+        intensity: string,
+        tempThreshold: string,
+        moistureThreshold: string
+    }
+
 }

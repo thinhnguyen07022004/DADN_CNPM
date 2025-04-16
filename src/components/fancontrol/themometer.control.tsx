@@ -12,12 +12,16 @@ const Thermometer: React.FC<ThermometerProps> = ({ temperature, min = 0, max = 5
     const height = 200;
     const width = 10;
 
-    const clampedTemp = Math.max(min, Math.min(max, temperature));
-    const fillHeight = ((clampedTemp - min) / (max - min)) * height;
+    const validTemp = isNaN(temperature) || temperature === undefined ? min : temperature;
+
+    const clampedTemp = Math.max(min, Math.min(max, validTemp));
+
+    const fillHeight = max > min ? ((clampedTemp - min) / (max - min)) * height : 0;
+    const yPosition = height - fillHeight;
 
     return (
         <View style={styles.container}>
-            <Text style={styles.tempText}>{temperature.toFixed(1)}°C</Text>
+            <Text style={styles.tempText}>{clampedTemp.toFixed(1)}°C</Text>
             <Svg height={height} width={width}>
                 <Defs>
                     <LinearGradient id="grad" x1="0" y1="1" x2="0" y2="0">
@@ -39,9 +43,9 @@ const Thermometer: React.FC<ThermometerProps> = ({ temperature, min = 0, max = 5
                 />
                 <Rect
                     x="0"
-                    y={height - fillHeight}
+                    y={isNaN(yPosition) ? height : yPosition}
                     width={width}
-                    height={fillHeight}
+                    height={isNaN(fillHeight) ? 0 : fillHeight}
                     rx="10"
                     ry="10"
                     fill="url(#grad)"

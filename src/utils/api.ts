@@ -1,6 +1,7 @@
 import axios from "@/utils/axios.customize";
 import { AxiosResponse } from "axios";
 
+//! Authenticate API
 const registerAPI = ( phoneNumber: string, password: string, name: string) => {
     const url = `${process.env.EXPO_PUBLIC_API_URL}/auth/signup`;
     return axios.post<IRegister>(url, { phoneNumber, password, name });
@@ -11,6 +12,7 @@ const logInAPI = ( phoneNumber: string, password: string) => {
     return axios.post<ILogin>(url, { phoneNumber, password });
 }
 
+//! Config API
 const getConfigAPI = ( userId: string) => {
     const url = `${process.env.EXPO_PUBLIC_API_URL}/config`;
     return axios.get<IConfig>(url, { params: { userId } });
@@ -19,6 +21,24 @@ const getConfigAPI = ( userId: string) => {
 const addConfigAPI = ( userId: string, iotName: string, iotApiKey: string) => {
     const url = `${process.env.EXPO_PUBLIC_API_URL}/config`;
     return axios.post<IConfig>(url, { userId, iotName, iotApiKey });
+}
+
+//! DOOR API
+const getDoorAPI = ( configId: string ) => {
+    const url = `${process.env.EXPO_PUBLIC_API_URL}/door`;
+    return axios.get<IDoor>(url, { params: { configId } });
+}
+
+const updateDoorAPI = (
+    configId: string,
+    doorPassword: string,
+    ) => {
+    const url = `${process.env.EXPO_PUBLIC_API_URL}/door`;
+
+    return axios.patch<IDoor>(url, {
+        configId,
+        doorPassword,
+    });
 }
 
 //! FAN API
@@ -38,6 +58,72 @@ const updateFanAPI = (
         configId,
         controlledMode,
         fanOns,
+    });
+};
+
+//! LIGHT API
+const getLightAPI = ( configId: string ) => {
+    const url = `${process.env.EXPO_PUBLIC_API_URL}/light`;
+    return axios.get<IFan>(url, { params: { configId } });
+}
+
+const updateLightAPI = (
+    configId: string,
+    controlledMode: string,
+    onTime: string,
+    offTime: string,
+    lightsOns: lightOns[]
+    ) => {
+    const url = `${process.env.EXPO_PUBLIC_API_URL}/light`;
+
+    return axios.patch<IConfig>(url, {
+        configId,
+        controlledMode,
+        onTime,
+        offTime,
+        lightsOns,
+    });
+};
+
+//! MISTING API
+
+const getMistingAPI = ( configId: string ) => {
+    const url = `${process.env.EXPO_PUBLIC_API_URL}/misting`;
+    return axios.get<IFan>(url, { params: { configId } });
+}
+
+const updateMistingAPI = (
+    configId: string,
+    controlledMode: string,
+    mistingOns: lightOns[]
+    ) => {
+    const url = `${process.env.EXPO_PUBLIC_API_URL}/light`;
+
+    return axios.patch<IConfig>(url, {
+        configId,
+        controlledMode,
+        mistingOns,
+    });
+};
+
+//! SENSOR RECORD API
+
+const getSensorRecordAPI = ( configId: string ) => {
+    const url = `${process.env.EXPO_PUBLIC_API_URL}/records`;
+    return axios.get<IFan>(url, { params: { configId } });
+}
+
+const updateSensorRecordAPI = (
+    configId: string,
+    controlledMode: string,
+    mistingOns: lightOns[]
+    ) => {
+    const url = `${process.env.EXPO_PUBLIC_API_URL}/records`;
+
+    return axios.patch<IConfig>(url, {
+        configId,
+        controlledMode,
+        mistingOns,
     });
 };
 
@@ -183,24 +269,27 @@ const fetchHumidityFeedSinceAPI = (iotName: string, apiKey: string, limit: numbe
 };
 
 //! Automated devices controller
-const fanControllerAPI = (value: string, iotName: string, apiKey: string) => {
+const feetControllerAPI = (value: string, iotName: string, apiKey: string) => {
     const url = `${process.env.EXPO_PUBLIC_ADAFRUIT_API_URL}/${iotName}/feeds/automatedfeed/data`;
     return axios.post<IFeed[]>(url, 
         { value },
         { headers: { "X-AIO-Key": apiKey } });
 }
 
-
 export {
     registerAPI,
     logInAPI,
     getConfigAPI, addConfigAPI,
+    getDoorAPI, updateDoorAPI,
     getFanAPI, updateFanAPI,
+    getLightAPI, updateLightAPI,
+    getMistingAPI, updateMistingAPI,
+    getSensorRecordAPI, updateSensorRecordAPI,
     fetchSingleLightFeedAPI, fetchSingleTemperatureFeedAPI, fetchSingleHumidityFeedAPI,
     fetchAllLightFeedAPI, fetchAllTemperatureFeedAPI, fetchAllHumidityFeedAPI,
     fetchLightFeedInTimeRangeAPI, fetchLightFeedSinceAPI,
     fetchTemperatureFeedInTimeRangeAPI, fetchTemperatureFeedSinceAPI,
     fetchHumidityFeedInTimeRangeAPI, fetchHumidityFeedSinceAPI,
-    fanControllerAPI,
+    feetControllerAPI,
 }
 

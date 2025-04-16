@@ -35,7 +35,7 @@ const ShareButton = (props: IProps) => {
             style={({ pressed }) => ([
                 {
                     opacity: pressed === true || loading ? 0.5 : 1,
-                    alignSelf: "flex-start", //fit-content
+                    alignSelf: "flex-start",
                 }, pressStyle
             ])}
             onPress={onPress}

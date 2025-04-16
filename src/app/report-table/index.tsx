@@ -35,7 +35,6 @@ const formatFeedData = (data: IFeed[]): IFeed[] => {
     }));
 };
 
-// Thành phần con tối ưu hóa với React.memo
 const FeedItem = memo(({ item }: { item: IFeed }) => (
     <View style={styles.card}>
         <View style={styles.infoRow}>
