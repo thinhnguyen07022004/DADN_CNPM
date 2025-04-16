@@ -44,4 +44,36 @@ declare global {
         expiration: string
     }
 
+    interface IFan {
+        _id: string,
+        deviceId: string,
+        configId: string,
+        controlledMode: string,
+        fanOns: [
+            {
+                intensity: number,
+                threshold: number,
+                _id: string
+            },
+            {
+                intensity: number,
+                threshold: number,
+                _id: string
+            }
+        ],
+        createdAt: string,
+        updatedAt: string,
+    }
+
+    interface FanOn {
+        intensity: string;
+        threshold: string;
+    }
+    
+    interface IConfig {
+        configId: string;
+        controlledMode: string;
+        fanOns: FanOn[];
+    }
+
 }

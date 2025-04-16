@@ -71,6 +71,13 @@ const RootLayout = () => {
                     />
 
                     <Stack.Screen
+                        name="report-table/index"
+                        options={{
+                            headerTitle: () => <HomeHeader />,
+                        }}
+                    />
+
+                    <Stack.Screen
                         name="fan-control/index"
                         options={{
                             headerTitle: () => <HomeHeader />,

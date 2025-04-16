@@ -7,7 +7,6 @@ import {
 import React, { useEffect, useRef, useState } from "react";
 import { Text, ScrollView } from "react-native";
 import LineChart from "@/components/lineChart/line.chart.data";
-import { MQTTClient } from "@/utils/mqtt";
 
 // Cấu hình biểu đồ cho độ sáng
 const lightChartConfig = {

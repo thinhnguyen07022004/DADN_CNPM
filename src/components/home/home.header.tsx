@@ -19,7 +19,7 @@ const HomeHeader = () => {
             <Image
                 style={{
                     width: 35,
-                    height: 35,
+                    height: 20,
                 }}
                 source={iconFarm} />
             <Text style={styles.body}>
