@@ -1,9 +1,10 @@
 import ShareButton from "@/components/button/share.button"
 import ShareInput from "@/components/input/share.input"
+import LoadingOverlay from "@/components/loading/overlay"
 import { useCurrentApp } from "@/context/app.context"
 import { addConfigAPI } from "@/utils/api"
 import { APP_COLOR } from "@/utils/constant"
-import { Link, router } from "expo-router"
+import { router } from "expo-router"
 import { useState } from "react"
 import { StyleSheet, Text, View } from "react-native"
 import Toast from "react-native-root-toast"
@@ -18,9 +19,9 @@ const styles = StyleSheet.create({
 
 })
 
-const VerifyPage = () => {
+const ConfigPage = () => {
+    const { config } = useCurrentApp()
     const { appState } = useCurrentApp()
-    const [userId, setUserId] = useState<string>("");
     const [iotName, setIotName] = useState<string>("");
     const [iotApiKey, setIotApiKey] = useState<string>("");
     const [loading, setLoading] = useState<boolean>(false);
@@ -31,8 +32,9 @@ const VerifyPage = () => {
                 setLoading(true);
                 const res = await addConfigAPI(appState.id, iotName, iotApiKey);
                 setLoading(false);
+
                 if (res) {
-                    router.navigate("/(auth)/login")
+                    router.navigate("/(tabs)")
                     Toast.show("Cấu hình thành công", {
                         duration: Toast.durations.LONG,
                         textColor: "#fff",
@@ -50,7 +52,7 @@ const VerifyPage = () => {
             }
         }
         catch (error) {
-            Toast.show("Cấu hình thất bại", {
+            Toast.show("Đăng nhập thất bại", {
                 duration: Toast.durations.LONG,
                 textColor: "#fff",
                 backgroundColor: "red",
@@ -67,7 +69,7 @@ const VerifyPage = () => {
                         fontWeight: 600,
                         marginVertical: 30
                     }}
-                    >Cấu hình Adafruit</Text>
+                    >Cấu hình thông tin thiết bị</Text>
                 </View>
                 <ShareInput
                     title="userId"
@@ -76,35 +78,45 @@ const VerifyPage = () => {
                 />
                 <ShareInput
                     title="iotName"
-                    value={iotName}
+                    value={iotName || config?.iotName}
                     setValue={setIotName}
+                    disabled={config?.iotName ? true : false}
                 />
                 <ShareInput
                     title="iotApiKey"
-                    value={iotApiKey}
+                    value={iotApiKey || config?.iotApiKey}
                     setValue={setIotApiKey}
+                    disabled={config?.iotApiKey ? true : false}
                 />
-                <View style={{ marginVertical: 10 }}></View>
-                <ShareButton
-                    title="Xác nhận"
-                    onPress={() => handleVerify()}
-                    textStyle={{
-                        textTransform: "uppercase",
-                        color: "#fff",
-                        paddingVertical: 5
-                    }}
-                    buttonStyle={{
-                        justifyContent: "center",
-                        borderRadius: 30,
-                        marginHorizontal: 50,
-                        paddingHorizontal: 10,
-                        backgroundColor: APP_COLOR.GREEN,
-                    }}
-                    pressStyle={{ alignSelf: "stretch" }}
-                />
+                <View style={{ marginVertical: 140 }}></View>
+
+                {appState?.id && !config?.iotName && !config?.iotApiKey
+                    ?
+                    <ShareButton
+                        title="Xác nhận"
+                        onPress={() => handleVerify()}
+                        textStyle={{
+                            textTransform: "uppercase",
+                            color: "#fff",
+                            paddingVertical: 5
+                        }}
+                        buttonStyle={{
+                            justifyContent: "center",
+                            borderRadius: 30,
+                            marginHorizontal: 50,
+                            paddingHorizontal: 10,
+                            backgroundColor: APP_COLOR.GREEN,
+                            width: "80%",
+                        }}
+                        pressStyle={{ alignSelf: "stretch" }}
+                    />
+                    :
+                    <></>
+                }
             </View>
+            {loading && <LoadingOverlay />}
         </SafeAreaView>
     )
 }
 
-export default VerifyPage
+export default ConfigPage

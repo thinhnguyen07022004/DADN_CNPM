@@ -45,7 +45,7 @@ const styles = StyleSheet.create({
 const WelcomePage = () => {
     // if (true) {
     //     return (
-    //         <Redirect href={"/(tabs)"} />
+    //         <Redirect href={"/remote-control"} />
     //     )
     // }
     return (

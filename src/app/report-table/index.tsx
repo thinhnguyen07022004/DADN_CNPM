@@ -98,7 +98,6 @@ const DataTablePage = () => {
                 const tempDataArray = Array.isArray(tempRes) ? formatFeedData(tempRes) : [];
                 const humidDataArray = Array.isArray(humidRes) ? formatFeedData(humidRes) : [];
 
-                // Lưu toàn bộ dữ liệu để phân trang
                 setAllLightData(lightDataArray);
                 setAllTemperatureData(tempDataArray);
                 setAllHumidityData(humidDataArray);

@@ -4,6 +4,7 @@ import { APP_COLOR } from "@/utils/constant";
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import Entypo from '@expo/vector-icons/Entypo';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 
 const TabLayout = () => {
 
@@ -18,20 +19,19 @@ const TabLayout = () => {
             )
         }
 
-        if (routeName === "lock") {
-            return (focused ?
-                <Entypo name="lock-open" size={size} color={APP_COLOR.GREEN} />
-                :
-                <Entypo name="lock" size={24} color={APP_COLOR.GREY} />
-            )
-        }
+        // if (routeName === "lock") {
+        //     return (focused ?
+        //         <Entypo name="lock-open" size={size} color={APP_COLOR.GREEN} />
+        //         :
+        //         <Entypo name="lock" size={size} color={APP_COLOR.GREY} />
+        //     )
+        // }
 
-        if (routeName === "history") {
+        if (routeName === "configuration") {
             return (focused ?
-                <FontAwesome name="history" size={size} color={APP_COLOR.GREEN} />
+                <MaterialIcons name="verified-user" size={size} color={APP_COLOR.GREEN} />
                 :
-                <FontAwesome name="history" size={size} color={APP_COLOR.GREY} />
-
+                <MaterialIcons name="verified-user" size={size} color={APP_COLOR.GREY} />
             )
         }
         if (routeName === "user") {
@@ -65,17 +65,17 @@ const TabLayout = () => {
                 }}
             />
 
-            <Tabs.Screen
+            {/* <Tabs.Screen
                 name="lock"
                 options={{
                     title: "Lock"
                 }}
-            />
+            /> */}
 
             <Tabs.Screen
-                name="history"
+                name="configuration"
                 options={{
-                    title: "History"
+                    title: "Configuration"
                 }}
             />
 

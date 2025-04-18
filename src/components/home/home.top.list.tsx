@@ -29,7 +29,7 @@ const gridItems: GridItem[] = [
     { id: "5", iconName: "door-closed", label: "Door Controls", href: "/door" },
     { id: "6", iconName: "fan", label: "Fan Controls", href: "/fan-control" },
     { id: "7", iconName: "lightbulb", label: "Light Controls", href: "/light-control" },
-    { id: "8", iconName: "cogs", label: "Technique", href: "/technique" },
+    { id: "8", iconName: "cloud-rain", label: "Misting Controls", href: "/misting-control" },
 ];
 
 const HomeTopList = () => {

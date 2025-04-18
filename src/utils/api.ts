@@ -276,6 +276,21 @@ const feetControllerAPI = (value: string, iotName: string, apiKey: string) => {
         { headers: { "X-AIO-Key": apiKey } });
 }
 
+//! Remote API
+const remoteControllerAPI = (value: string, iotName: string, apiKey: string) => {
+    const url = `${process.env.EXPO_PUBLIC_ADAFRUIT_API_URL}/${iotName}/feeds/controllerfeed/data`;
+    return axios.post<IFeed[]>(url, 
+        { value },
+        { headers: { "X-AIO-Key": apiKey } });
+}
+
+const updatePasswordAPI = (value: string, iotName: string, apiKey: string) => {
+    const url = `${process.env.EXPO_PUBLIC_ADAFRUIT_API_URL}/${iotName}/feeds/doorpassword/data`;
+    return axios.post<IFeed[]>(url, 
+        { value },
+        { headers: { "X-AIO-Key": apiKey } });
+}
+
 export {
     registerAPI,
     logInAPI,
@@ -291,5 +306,6 @@ export {
     fetchTemperatureFeedInTimeRangeAPI, fetchTemperatureFeedSinceAPI,
     fetchHumidityFeedInTimeRangeAPI, fetchHumidityFeedSinceAPI,
     feetControllerAPI,
+    remoteControllerAPI, updatePasswordAPI
 }
 

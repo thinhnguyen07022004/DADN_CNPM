@@ -66,7 +66,7 @@ const RootLayout = () => {
                         />
 
                         <Stack.Screen
-                            name="technique/index"
+                            name="misting-control/index"
                             options={{
                                 headerTitle: () => <HomeHeader />,
                             }}

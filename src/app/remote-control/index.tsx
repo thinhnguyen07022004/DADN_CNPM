@@ -1,107 +1,159 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { View, Text, StyleSheet, Keyboard } from 'react-native';
 import { APP_COLOR } from '@/utils/constant';
+import OTPTextView from 'react-native-otp-textinput';
+import LoadingOverlay from '@/components/loading/overlay';
+import { useCurrentApp } from '@/context/app.context';
+import { getDoorAPI, remoteControllerAPI, updatePasswordAPI } from '@/utils/api';
+import Toast from 'react-native-root-toast';
+import { router } from 'expo-router';
+import ShareButton from '@/components/button/share.button';
 
-const initialData = {
-    configId: '7d858f06-2898-4a40-b4c9-25e2f701db09',
-    controlledMode: 'Automatic',
-    fanOns: [
-        { intensity: '75', threshold: '32' },
-        { intensity: '100', threshold: '35' },
-        { intensity: '75', threshold: '32' },
-        { intensity: '100', threshold: '35' },
-        { intensity: '75', threshold: '32' },
-        { intensity: '100', threshold: '35' },
-        { intensity: '75', threshold: '32' },
-        { intensity: '100', threshold: '35' },
-    ],
-};
+const RemoteControlPage = () => {
+    const { config } = useCurrentApp()
+    const [isSubmit, setIsSubmit] = useState(false);
+    const [doorPassword, setDoorPassword] = useState('');
+    const [otp, setOtp] = useState('');
+    const [error, setError] = useState<string | null>(null);
+    const otpRef = useRef<OTPTextView>(null);
 
-const FanConfigScreen = () => {
-    const [config, setConfig] = useState(initialData);
+    useEffect(() => {
+        const fetchDoorData = async () => {
+            try {
+                if (!config?.id || !config?.iotApiKey || !config?.iotName) {
+                    router.navigate("/(tabs)/configuration")
+                    Toast.show("Người dùng chưa cấu hình tài khoản", {
+                        duration: Toast.durations.LONG,
+                        textColor: "#fff",
+                        backgroundColor: "red",
+                        opacity: 1,
+                    });
+                    return;
+                }
+                setIsSubmit(true);
+                const response = await getDoorAPI(config?.id);
+                // @ts-ignore:next-line
+                const doorData = response[0]
+                // console.log(">>>check response", doorData);
+                setDoorPassword(doorData?.doorPassword);
+                // console.log(">>>check response doorPassword", doorPassword);
+                if (!response?.doorPassword) {
+                    const res = await updatePasswordAPI(doorPassword, config?.iotName, config?.iotApiKey);
+                    // console.log(">>>check updatePasswordAPI", res);
+                } else {
+                    Toast.show("Người dùng chưa thêm dữ liệu cửa và hệ thốngthống", {
+                        duration: Toast.durations.LONG,
+                        textColor: "#fff",
+                        backgroundColor: "red",
+                        opacity: 1,
+                    });
+                }
+            } catch (err) {
+                Toast.show("Người dùng chưa thêm dữ liệu cửa và hệ thốngthống", {
+                    duration: Toast.durations.LONG,
+                    textColor: "#fff",
+                    backgroundColor: "red",
+                    opacity: 1,
+                });
+                console.error(err);
+            } finally {
+                setIsSubmit(false);
+            }
+        };
 
-    const updateFanOn = (index: number, key: 'intensity' | 'threshold', value: string) => {
-        const updatedFanOns = [...config.fanOns];
-        updatedFanOns[index][key] = value;
-        setConfig({ ...config, fanOns: updatedFanOns });
-    };
+        fetchDoorData();
+    }, []);
 
-    const handleUpdate = () => {
-        // gọi API ở đây
-        console.log('Sending config:', config);
-        // Gọi API update tại đây, ví dụ: axios.post('/api/updateFan', config)
+    const handleSubmit = async () => {
+        if (!config?.id || !config?.iotApiKey || !config?.iotName) {
+            Toast.show("Người dùng chưa cấu hình tài khoản", {
+                duration: Toast.durations.LONG,
+                textColor: "#fff",
+                backgroundColor: "red",
+                opacity: 1,
+            });
+            router.navigate("/(tabs)/configuration")
+            return;
+        }
+        try {
+            setIsSubmit(true);
+            const res = await remoteControllerAPI(otp, config?.iotName, config?.iotApiKey);
+            console.log(">>>check remoteControllerAPI", res);
+            Keyboard.dismiss();
+            setOtp('');
+            Toast.show("Gửi tín hiệu thành công", {
+                duration: Toast.durations.LONG,
+                textColor: "#fff",
+                backgroundColor: APP_COLOR.GREEN,
+                opacity: 1,
+            });
+        } catch (err) {
+            Toast.show("Không thể gửi tín hiệu đi", {
+                duration: Toast.durations.LONG,
+                textColor: "#fff",
+                backgroundColor: "red",
+                opacity: 1,
+            });
+            console.error(err);
+        } finally {
+            otpRef.current?.clear();
+            setIsSubmit(false);
+        }
     };
 
     return (
-        <ScrollView contentContainerStyle={styles.container}>
-            <Text style={styles.header}>Fan Configuration</Text>
-
-            <View style={styles.row}>
-                <Text style={styles.label}>Controlled Mode:</Text>
-                <Text style={styles.value}>{config.controlledMode}</Text>
+        <>
+            <View style={styles.container}>
+                <Text style={styles.heading}>Remote Control</Text>
+                <OTPTextView
+                    ref={otpRef}
+                    handleTextChange={setOtp}
+                    inputCount={6}
+                    inputCellLength={1}
+                    tintColor={APP_COLOR.GREEN}
+                    textInputStyle={{
+                        borderWidth: 1,
+                        borderColor: APP_COLOR.GREY,
+                        borderBottomWidth: 1,
+                        borderRadius: 5,
+                        // @ts-ignore:next-line
+                        color: APP_COLOR.GREEN,
+                    }}
+                />
             </View>
-
-            {config.fanOns.map((fan, index) => (
-                <View key={index} style={styles.fanBox}>
-                    <Text style={styles.subHeader}>Fan #{index + 1}</Text>
-                    <TextInput
-                        style={styles.input}
-                        value={fan.intensity}
-                        onChangeText={(value) => updateFanOn(index, 'intensity', value)}
-                        placeholder="Intensity"
-                        keyboardType="numeric"
-                    />
-                    <TextInput
-                        style={styles.input}
-                        value={fan.threshold}
-                        onChangeText={(value) => updateFanOn(index, 'threshold', value)}
-                        placeholder="Threshold"
-                        keyboardType="numeric"
-                    />
-                </View>
-            ))}
-
-            <TouchableOpacity style={styles.button} onPress={handleUpdate}>
-                <Text style={styles.buttonText}>Update Fan Config</Text>
-            </TouchableOpacity>
-        </ScrollView>
+            <ShareButton
+                loading={isSubmit}
+                title="Sent"
+                onPress={() => handleSubmit()}
+                textStyle={{
+                    textTransform: "uppercase",
+                    color: "#fff",
+                    paddingVertical: 5
+                }}
+                buttonStyle={{
+                    justifyContent: "center",
+                    borderRadius: 30,
+                    marginHorizontal: 50,
+                    paddingHorizontal: 10,
+                    backgroundColor: APP_COLOR.GREEN,
+                }}
+                pressStyle={{ alignSelf: "stretch" }}
+            />
+            {isSubmit && <LoadingOverlay />}
+        </>
     );
 };
 
 const styles = StyleSheet.create({
-    container: { padding: 16, backgroundColor: '#f5f5f5', flexGrow: 1 },
-    header: { fontSize: 22, fontWeight: 'bold', marginBottom: 16 },
-    row: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 },
-    label: { fontSize: 16, color: '#555' },
-    value: { fontSize: 16, color: '#333', fontWeight: '600' },
-    fanBox: {
-        backgroundColor: '#fff',
-        padding: 16,
-        borderRadius: 12,
-        marginBottom: 16,
-        shadowColor: '#000',
-        shadowOpacity: 0.05,
-        shadowOffset: { width: 0, height: 1 },
-        shadowRadius: 3,
-        elevation: 2,
+    container: {
+        paddingVertical: 30,
+        paddingHorizontal: 20,
     },
-    subHeader: { fontSize: 16, fontWeight: '600', marginBottom: 10 },
-    input: {
-        borderWidth: 1,
-        borderColor: '#ccc',
-        borderRadius: 10,
-        padding: 10,
-        marginBottom: 10,
-        backgroundColor: '#fff',
-    },
-    button: {
-        backgroundColor: APP_COLOR.GREEN,
-        padding: 16,
-        borderRadius: 12,
-        alignItems: 'center',
-        marginTop: 12,
-    },
-    buttonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
+    heading: {
+        fontSize: 25,
+        fontWeight: "600",
+        marginVertical: 20,
+    }
 });
 
-export default FanConfigScreen;
+export default RemoteControlPage;

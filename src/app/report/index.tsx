@@ -3,17 +3,26 @@ import {
     fetchSingleLightFeedAPI,
     fetchSingleTemperatureFeedAPI,
     fetchSingleHumidityFeedAPI,
+    fetchLightFeedInTimeRangeAPI,
+    fetchTemperatureFeedInTimeRangeAPI,
+    fetchHumidityFeedInTimeRangeAPI,
 } from "@/utils/api";
 import React, { useEffect, useRef, useState } from "react";
-import { Text, ScrollView } from "react-native";
+import { Text, ScrollView, StyleSheet, Switch } from "react-native";
 import LineChart from "@/components/lineChart/line.chart.data";
+import { Calendar } from "react-native-calendars";
+import { View } from "react-native";
+import LoadingOverlay from "@/components/loading/overlay";
+import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc"; // Thêm plugin UTC
 
-// Cấu hình biểu đồ cho độ sáng
+dayjs.extend(utc); // Kích hoạt plugin UTC
+
 const lightChartConfig = {
-    backgroundGradientFrom: "#e0f7fa", // Xanh nhạt
+    backgroundGradientFrom: "#e0f7fa",
     backgroundGradientTo: "#ffffff",
     backgroundGradientToOpacity: 0.5,
-    color: (opacity = 1) => `rgba(0, 105, 192, ${opacity})`, // Xanh dương
+    color: (opacity = 1) => `rgba(0, 105, 192, ${opacity})`,
     strokeWidth: 2,
     decimalPlaces: 0,
     propsForDots: {
@@ -27,12 +36,11 @@ const lightChartConfig = {
     },
 };
 
-// Cấu hình biểu đồ cho nhiệt độ
 const temperatureChartConfig = {
-    backgroundGradientFrom: "#ffebee", // Đỏ nhạt
+    backgroundGradientFrom: "#ffebee",
     backgroundGradientTo: "#ffffff",
     backgroundGradientToOpacity: 0.5,
-    color: (opacity = 1) => `rgba(211, 47, 47, ${opacity})`, // Đỏ
+    color: (opacity = 1) => `rgba(211, 47, 47, ${opacity})`,
     strokeWidth: 2,
     decimalPlaces: 0,
     propsForDots: {
@@ -46,12 +54,11 @@ const temperatureChartConfig = {
     },
 };
 
-// Cấu hình biểu đồ cho độ ẩm
 const humidityChartConfig = {
-    backgroundGradientFrom: "#e8f5e9", // Xanh lá nhạt
+    backgroundGradientFrom: "#e8f5e9",
     backgroundGradientTo: "#ffffff",
     backgroundGradientToOpacity: 0.5,
-    color: (opacity = 1) => `rgba(46, 125, 50, ${opacity})`, // Xanh lá
+    color: (opacity = 1) => `rgba(46, 125, 50, ${opacity})`,
     strokeWidth: 2,
     decimalPlaces: 0,
     propsForDots: {
@@ -67,6 +74,10 @@ const humidityChartConfig = {
 
 const ReportPage = () => {
     const { config } = useCurrentApp();
+    const [dateRange, setDateRange] = useState<{
+        startDate: Date | null;
+        endDate: Date | null;
+    }>({ startDate: null, endDate: null });
     const [lightChartData, setLightChartData] = useState({
         labels: [] as string[],
         datasets: [{ data: [] as number[] }],
@@ -80,9 +91,17 @@ const ReportPage = () => {
         datasets: [{ data: [] as number[] }],
     });
 
+    const [isFilter, setIsFilter] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+    const [selected, setSelected] = useState('');
+
+    const toggleFilter = () => {
+        setIsFilter(previousState => !previousState);
+        setDateRange({ startDate: null, endDate: null });
+    };
+
     useEffect(() => {
         if (config?.iotName && config?.iotApiKey) {
-            // Hàm xử lý dữ liệu chung
             const processFeedData = (
                 data: IFeed[],
                 setChartData: React.Dispatch<
@@ -116,94 +135,263 @@ const ReportPage = () => {
                 });
             };
 
-            // Hàm fetch dữ liệu
             const fetchData = async () => {
+                // setIsLoading(true);
                 try {
-                    const [lightRes, tempRes, humidRes] = await Promise.all([
-                        fetchSingleLightFeedAPI(config.iotName, config.iotApiKey, 10),
-                        fetchSingleTemperatureFeedAPI(config.iotName, config.iotApiKey, 10),
-                        fetchSingleHumidityFeedAPI(config.iotName, config.iotApiKey, 10),
-                    ]);
+                    let lightRes, tempRes, humidRes;
 
-                    processFeedData(lightRes, setLightChartData);
-                    processFeedData(tempRes, setTemperatureChartData);
-                    processFeedData(humidRes, setHumidityChartData);
+                    if (isFilter && dateRange.startDate && dateRange.endDate) {
+                        const startTime = dayjs(dateRange.startDate).utc().toISOString().slice(0, 16) + "Z";
+                        const endTime = dayjs(dateRange.endDate).utc().toISOString().slice(0, 16) + "Z";
+                        // console.log("Fetching data in time range:", { startTime, endTime });
+
+                        [lightRes, tempRes, humidRes] = await Promise.all([
+                            fetchLightFeedInTimeRangeAPI(
+                                config.iotName,
+                                config.iotApiKey,
+                                10,
+                                new Date(startTime),
+                                new Date(endTime)
+                            ),
+                            fetchTemperatureFeedInTimeRangeAPI(
+                                config.iotName,
+                                config.iotApiKey,
+                                10,
+                                new Date(startTime),
+                                new Date(endTime)
+                            ),
+                            fetchHumidityFeedInTimeRangeAPI(
+                                config.iotName,
+                                config.iotApiKey,
+                                10,
+                                new Date(startTime),
+                                new Date(endTime)
+                            ),
+                        ]);
+                    } else {
+                        [lightRes, tempRes, humidRes] = await Promise.all([
+                            fetchSingleLightFeedAPI(config.iotName, config.iotApiKey, 10),
+                            fetchSingleTemperatureFeedAPI(config.iotName, config.iotApiKey, 10),
+                            fetchSingleHumidityFeedAPI(config.iotName, config.iotApiKey, 10),
+                        ]);
+                    }
+                    if (
+                        lightRes.length === 0 &&
+                        tempRes.length === 0 &&
+                        humidRes.length === 0
+                    ) {
+                        console.log("Không có dữ liệu trong khoảng thời gian này.");
+                    } else {
+                        processFeedData(lightRes, setLightChartData);
+                        processFeedData(tempRes, setTemperatureChartData);
+                        processFeedData(humidRes, setHumidityChartData);
+                    }
                 } catch (err) {
-                    console.error("Fetch feed error:", err);
+                    console.log("Không thể tải dữ liệu, vui lòng thử lại.");
+                } finally {
+                    setIsLoading(false);
                 }
             };
 
-            // Gọi ngay lần đầu
             fetchData();
 
-            // Cập nhật mỗi 5 giây
-            const interval = setInterval(() => {
-                fetchData();
-                console.log("Fetching data every 5 seconds...");
-            }, 5000); // 5000ms = 5 giây
+            // const interval = setInterval(() => {
+            //     fetchData();
+            // }, 10000); // 5000ms = 5 giây
 
-            // Dọn dẹp interval khi component unmount
-            return () => clearInterval(interval);
+            // return () => clearInterval(interval);
         }
-    }, [config?.iotName, config?.iotApiKey]);
+    }, [config?.iotName, config?.iotApiKey, dateRange]);
+
+    const markedDates: Record<string, {
+        startingDay: boolean;
+        endingDay: boolean;
+        color: string;
+        textColor: string;
+        selected: boolean;
+        selectedColor: string;
+    }> = {};
+    if (dateRange.startDate && dateRange.endDate) {
+        const start = dayjs(dateRange.startDate);
+        const end = dayjs(dateRange.endDate);
+        let current = start;
+        while (current <= end) {
+            const dateStr = current.format("YYYY-MM-DD");
+            markedDates[dateStr] = {
+                startingDay: current.isSame(start, "day"),
+                endingDay: current.isSame(end, "day"),
+                color: "rgba(30, 144, 255, 0.2)",
+                textColor: "#333",
+                selected: true,
+                selectedColor: current.isSame(start, "day") || current.isSame(end, "day") ? "#1E90FF" : "transparent",
+            };
+            current = current.add(1, "day");
+        }
+    }
+
 
     return (
         <ScrollView>
-            <Text
-                style={{
-                    fontSize: 20,
-                    textAlign: "center",
-                    marginVertical: 16,
-                    fontWeight: "bold",
-                }}
-            >
-                Biểu đồ độ sáng
-            </Text>
-            {lightChartData.labels.length > 0 ? (
-                <LineChart chartData={lightChartData} chartConfig={lightChartConfig} />
-            ) : (
-                <Text style={{ textAlign: "center" }}>Đang tải dữ liệu độ sáng...</Text>
-            )}
+            <View style={styles.container}>
+                <View style={styles.card}>
+                    <View style={styles.switchRow}>
+                        <Text style={styles.label}>Filter in range time</Text>
+                        <Switch
+                            trackColor={{ false: "#B0BEC5", true: "#81C784" }}
+                            thumbColor={isFilter ? "#FFFFFF" : "#ECEFF1"}
+                            onValueChange={toggleFilter}
+                            value={isFilter}
+                        />
+                    </View>
+                </View>
 
-            <Text
-                style={{
-                    fontSize: 20,
-                    textAlign: "center",
-                    marginVertical: 16,
-                    fontWeight: "bold",
-                }}
-            >
-                Biểu đồ nhiệt độ
-            </Text>
-            {temperatureChartData.labels.length > 0 ? (
-                <LineChart
-                    chartData={temperatureChartData}
-                    chartConfig={temperatureChartConfig}
-                />
-            ) : (
-                <Text style={{ textAlign: "center" }}>Đang tải dữ liệu nhiệt độ...</Text>
-            )}
+                {isFilter &&
+                    <View style={styles.datePickerContainer}>
+                        <Calendar
+                            initialDate="2025-04-01"
+                            style={styles.calendarContainer}
+                            theme={{
+                                backgroundColor: "#fff",
+                                calendarBackground: "#fff",
+                                textSectionTitleColor: "#666",
+                                textSectionTitleFontWeight: "500",
+                                textSectionTitleFontSize: 14,
+                                dayTextColor: "#333",
+                                textDisabledColor: "#999",
+                                monthTextColor: "#000",
+                                textMonthFontSize: 18,
+                                textMonthFontWeight: "bold",
+                                arrowColor: "#1E90FF",
+                            }}
+                            onDayPress={(day: { dateString: string }) => {
+                                const selectedDate = new Date(day.dateString);
+                                if (
+                                    !dateRange.startDate ||
+                                    (dateRange.startDate && dateRange.endDate)
+                                ) {
+                                    setDateRange({ startDate: selectedDate, endDate: null });
+                                } else if (dateRange.startDate && !dateRange.endDate) {
+                                    if (selectedDate < dateRange.startDate) {
+                                        setDateRange({
+                                            startDate: selectedDate,
+                                            endDate: dateRange.startDate,
+                                        });
+                                    } else {
+                                        setDateRange({
+                                            startDate: dateRange.startDate,
+                                            endDate: selectedDate,
+                                        });
+                                    }
+                                }
+                            }}
+                            markedDates={markedDates}
+                            markingType="period"
+                        />
+                    </View>
+                }
 
-            <Text
-                style={{
-                    fontSize: 20,
-                    textAlign: "center",
-                    marginVertical: 16,
-                    fontWeight: "bold",
-                }}
-            >
-                Biểu đồ độ ẩm
-            </Text>
-            {humidityChartData.labels.length > 0 ? (
-                <LineChart
-                    chartData={humidityChartData}
-                    chartConfig={humidityChartConfig}
-                />
-            ) : (
-                <Text style={{ textAlign: "center" }}>Đang tải dữ liệu độ ẩm...</Text>
-            )}
+                {lightChartData.labels.length > 0 ? (
+                    <LineChart chartData={lightChartData} chartConfig={lightChartConfig} />
+                ) : (
+                    <Text style={{ textAlign: "center" }}>Đang tải dữ liệu độ sáng...</Text>
+                )}
+                <Text style={{ fontSize: 15, textAlign: "center", marginBottom: 20, marginTop: 5, fontWeight: 500 }}>
+                    Light Chart Data Report
+                </Text>
+
+
+                {temperatureChartData.labels.length > 0 ? (
+                    <LineChart
+                        chartData={temperatureChartData}
+                        chartConfig={temperatureChartConfig}
+                    />
+                ) : (
+                    <Text style={{ textAlign: "center" }}>Đang tải dữ liệu nhiệt độ...</Text>
+                )}
+                <Text style={{ fontSize: 15, textAlign: "center", marginBottom: 20, marginTop: 5, fontWeight: 500 }}>
+                    Temperature Chart Data Report
+                </Text>
+
+
+                {humidityChartData.labels.length > 0 ? (
+                    <LineChart
+                        chartData={humidityChartData}
+                        chartConfig={humidityChartConfig}
+                    />
+                ) : (
+                    <Text style={{ textAlign: "center" }}>Đang tải dữ liệu độ ẩm...</Text>
+                )}
+                <Text style={{ fontSize: 15, textAlign: "center", marginBottom: 20, marginTop: 5, fontWeight: 500 }}>
+                    Humidity Chart Data Report
+                </Text>
+
+            </View>
+            {isLoading && <LoadingOverlay />}
         </ScrollView>
     );
 };
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        padding: 16,
+        // marginRight: 16,
+    },
+    card: {
+        marginTop: 16,
+        backgroundColor: "#FFFFFF",
+        borderRadius: 12,
+        marginLeft: 16,
+        padding: 5,
+        width: "92%",
+        marginBottom: 12,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 3,
+        alignItems: "center",
+    },
+    switchRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        width: "100%",
+    },
+    label: {
+        fontSize: 18,
+        fontWeight: "600",
+        color: "#333",
+    },
+    datePickerContainer: {
+        margin: 16,
+        padding: 16,
+        backgroundColor: "#F9F9F9",
+        borderRadius: 16,
+        shadowColor: "#000",
+        shadowOpacity: 0.1,
+        shadowOffset: { width: 0, height: 2 },
+        shadowRadius: 8,
+        elevation: 3,
+    },
+    calendarContainer: {
+        borderRadius: 12,
+        overflow: "hidden",
+    },
+    chartTitle: {
+        fontSize: 20,
+        textAlign: "center",
+        marginVertical: 16,
+        fontWeight: "bold",
+        color: "#333",
+    },
+    noDataText: {
+        textAlign: "center",
+        color: "#666",
+        fontSize: 16,
+        marginBottom: 20,
+    },
+});
+
 
 export default ReportPage;
