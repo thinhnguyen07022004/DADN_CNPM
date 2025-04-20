@@ -146,7 +146,7 @@ const fetchAllLightFeedAPI = (iotName: string,apiKey: string): Promise<AxiosResp
 });
 };
 
-const fetchLightFeedInTimeRangeAPI = (iotName: string, apiKey: string, limit: number, start_time: Date, end_time: Date): Promise<AxiosResponse<IFeed[]>> => {
+const fetchLightFeedInTimeRangeAPI = (iotName: string, apiKey: string, limit: number, start_time: string, end_time: string): Promise<AxiosResponse<IFeed[]>> => {
     const url = `${process.env.EXPO_PUBLIC_ADAFRUIT_API_URL}/${iotName}/feeds/lightfeed/data`;
     return axios.get<IFeed[]>(url, {
     headers: {
@@ -154,8 +154,8 @@ const fetchLightFeedInTimeRangeAPI = (iotName: string, apiKey: string, limit: nu
     },
     params: { 
         limit,
-        start_time: start_time.toISOString(),
-        end_time: end_time.toISOString(),
+        start_time: start_time.toString(),
+        end_time: end_time.toString(),
     },
     });
 };
@@ -168,7 +168,7 @@ const fetchLightFeedSinceAPI = (iotName: string, apiKey: string, limit: number, 
     },
     params: { 
         limit,
-        start_time: start_time.toISOString(),
+        start_time: start_time.toString(),
     },
     });
 };
@@ -193,7 +193,7 @@ const fetchAllTemperatureFeedAPI = (iotName: string,apiKey: string): Promise<Axi
     });
 };
 
-const fetchTemperatureFeedInTimeRangeAPI = (iotName: string, apiKey: string, limit: number, start_time: Date, end_time: Date): Promise<AxiosResponse<IFeed[]>> => {
+const fetchTemperatureFeedInTimeRangeAPI = (iotName: string, apiKey: string, limit: number, start_time: string, end_time: string): Promise<AxiosResponse<IFeed[]>> => {
     const url = `${process.env.EXPO_PUBLIC_ADAFRUIT_API_URL}/${iotName}/feeds/temperaturefeed/data`;
     return axios.get<IFeed[]>(url, {
         headers: {
@@ -201,8 +201,8 @@ const fetchTemperatureFeedInTimeRangeAPI = (iotName: string, apiKey: string, lim
         },
         params: {
             limit,
-            start_time: start_time.toISOString(),
-            end_time: end_time.toISOString(),
+            start_time: start_time.toString(),
+            end_time: end_time.toString(),
         },
     });
 };
@@ -215,7 +215,7 @@ const fetchTemperatureFeedSinceAPI = (iotName: string, apiKey: string, limit: nu
         },
         params: {
             limit,
-            start_time: start_time.toISOString(),
+            start_time: start_time.toString(),
         },
     });
 };
@@ -240,7 +240,7 @@ const fetchAllHumidityFeedAPI = (iotName: string,apiKey: string): Promise<AxiosR
     });
 };
 
-const fetchHumidityFeedInTimeRangeAPI = (iotName: string, apiKey: string, limit: number, start_time: Date, end_time: Date): Promise<AxiosResponse<IFeed[]>> => {
+const fetchHumidityFeedInTimeRangeAPI = (iotName: string, apiKey: string, limit: number, start_time: string, end_time: string): Promise<AxiosResponse<IFeed[]>> => {
     const url = `${process.env.EXPO_PUBLIC_ADAFRUIT_API_URL}/${iotName}/feeds/humidityfeed/data`;
     return axios.get<IFeed[]>(url, {
         headers: {
@@ -248,8 +248,8 @@ const fetchHumidityFeedInTimeRangeAPI = (iotName: string, apiKey: string, limit:
         },
         params: {
             limit,
-            start_time: start_time.toISOString(),
-            end_time: end_time.toISOString(),
+            start_time: start_time,
+            end_time: end_time,
         },
     });
 };
@@ -262,7 +262,7 @@ const fetchHumidityFeedSinceAPI = (iotName: string, apiKey: string, limit: numbe
         },
         params: {
             limit,
-            start_time: start_time.toISOString(),
+            start_time: start_time.toString(),
         },
     });
 };

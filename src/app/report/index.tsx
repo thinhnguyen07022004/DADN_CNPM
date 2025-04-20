@@ -139,31 +139,31 @@ const ReportPage = () => {
                     let lightRes, tempRes, humidRes;
 
                     if (isFilter && dateRange.startDate && dateRange.endDate) {
-                        const startTime = dayjs(dateRange.startDate).utc().toISOString().slice(0, 16) + "Z";
-                        const endTime = dayjs(dateRange.endDate).utc().toISOString().slice(0, 16) + "Z";
-
+                        const startTime = dayjs(dateRange.startDate).utc().format("YYYY-MM-DDTHH:mm[Z]");
+                        const endTime = dayjs(dateRange.endDate).utc().format("YYYY-MM-0DDTHH:mm[Z]");
                         [lightRes, tempRes, humidRes] = await Promise.all([
                             fetchLightFeedInTimeRangeAPI(
                                 config.iotName,
                                 config.iotApiKey,
                                 10,
-                                new Date(startTime),
-                                new Date(endTime)
+                                startTime,
+                                endTime
                             ),
                             fetchTemperatureFeedInTimeRangeAPI(
                                 config.iotName,
                                 config.iotApiKey,
                                 10,
-                                new Date(startTime),
-                                new Date(endTime)
+                                startTime,
+                                endTime
                             ),
                             fetchHumidityFeedInTimeRangeAPI(
                                 config.iotName,
                                 config.iotApiKey,
                                 10,
-                                new Date(startTime),
-                                new Date(endTime)
+                                startTime,
+                                endTime
                             ),
+
                         ]);
                     } else {
                         [lightRes, tempRes, humidRes] = await Promise.all([
