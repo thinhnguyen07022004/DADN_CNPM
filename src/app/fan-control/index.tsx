@@ -12,23 +12,32 @@ import { useCurrentApp } from "@/context/app.context";
 import { feetControllerAPI, fetchSingleTemperatureFeedAPI, getFanAPI, updateFanAPI } from "@/utils/api";
 import Toast from "react-native-root-toast";
 
+interface IFan {
+    _id: string;
+    deviceId: string;
+    configId: string;
+    controlledMode: string;
+    fanOns: IFanOn[];
+    createdAt: string;
+    updatedAt: string;
+}
+
 interface IFanOn {
     intensity: number;
     threshold: number;
-    _id: string;
+    _id?: string;
 }
 
-interface IFan {
-    controlledMode: string;
-    fanOns: IFanOn[];
-    updatedAt: string;
+interface IFanOnAPI {
+    intensity: string;
+    threshold: string;
 }
 
 const FanConfigScreen = () => {
     const { config } = useCurrentApp();
     const [fanLevel, setFanLevel] = useState(0);
-    const [tempRes, setTemRes] = useState<number>(0);
-    const [loading, setLoading] = useState<boolean>(false);
+    const [tempRes, setTemRes] = useState(0);
+    const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [isAutomatic, setIsAutomatic] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
@@ -36,47 +45,115 @@ const FanConfigScreen = () => {
     const [fanConfig, setFanConfig] = useState<IFan | null>(null);
     const [previousTemp, setPreviousTemp] = useState<number | null>(null);
 
+    const showToast = (message: string, isError = false) => {
+        Toast.show(message, {
+            duration: Toast.durations.LONG,
+            textColor: "#fff",
+            backgroundColor: isError ? "red" : APP_COLOR.GREEN,
+            opacity: 1,
+        });
+    };
+
+    const fetchTemperature = async () => {
+        if (!config?.iotName || !config?.iotApiKey) return;
+        try {
+            const [tempRes] = await Promise.all([
+                fetchSingleTemperatureFeedAPI(config.iotName, config.iotApiKey, 1),
+            ]);
+            const temp = parseFloat(tempRes[0].value);
+            if (!isNaN(temp)) setTemRes(temp);
+        } catch {
+            setError("Failed to fetch temperature data");
+        }
+    };
+
+    const fetchFanData = async () => {
+        if (!config?.id) return;
+        try {
+            const resFanList = await getFanAPI(config.id);
+            const validFanConfig = Array.isArray(resFanList.data)
+                ? resFanList.data
+                    .filter((fan: IFan) => fan.fanOns && fan.fanOns.length > 0)
+                    .sort((a: IFan, b: IFan) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())[0]
+                : null;
+
+            if (validFanConfig) {
+                setFanConfig(validFanConfig);
+                setFanOns(validFanConfig.fanOns || []);
+            } else {
+                setFanConfig(null);
+                setFanOns([]);
+            }
+        } catch {
+            setError("Failed to fetch fan configuration");
+        }
+    };
 
     const checkTemperatureAndControlFan = async () => {
         if (!config?.iotApiKey || !config?.iotName || !isAutomatic) {
             return;
         }
-
         try {
             setLoading(true);
             const [tempRes] = await Promise.all([
                 fetchSingleTemperatureFeedAPI(config.iotName, config.iotApiKey, 1),
             ]);
             const currentTemp = parseFloat(tempRes[0].value);
-            if (previousTemp !== null && Math.abs(currentTemp - previousTemp) < 0.1) {
-                return;
+
+            if (isNaN(currentTemp)) {
+                throw new Error("Invalid temperature data");
             }
 
-            setPreviousTemp(currentTemp);
             setTemRes(currentTemp);
 
             let newFanLevel = 0;
+            let conditionMet = false;
+
             for (const fanOn of fanOns) {
-                if (currentTemp >= fanOn.threshold) {
+                const tempCondition = currentTemp >= fanOn.threshold;
+                if (tempCondition) {
                     newFanLevel = Math.max(newFanLevel, fanOn.intensity);
+                    conditionMet = true;
                 }
             }
-            if (newFanLevel !== fanLevel) {
+
+            let shouldTurnOff = true;
+            for (const fanOn of fanOns) {
+                if (currentTemp >= fanOn.threshold) {
+                    shouldTurnOff = false;
+                    break;
+                }
+            }
+            if (newFanLevel !== fanLevel || shouldTurnOff) {
                 const value = `2:${newFanLevel}`;
-                await feetControllerAPI(value, config.iotName, config.iotApiKey);
-                setFanLevel(newFanLevel);
-                Toast.show(`Cập nhật quạt với cường độ ${newFanLevel}%`, {
-                    duration: Toast.durations.LONG,
-                    textColor: "#fff",
-                    backgroundColor: APP_COLOR.GREEN,
-                    opacity: 1,
-                });
+                try {
+                    await feetControllerAPI(value, config.iotName, config.iotApiKey);
+                    setFanLevel(newFanLevel);
+                    setPreviousTemp(currentTemp);
+                    // Toast.show(
+                    //     newFanLevel === 0
+                    //         ? `Fan turned off successfully.`
+                    //         : `Update fan with intensity ${newFanLevel}%`,
+                    //     {
+                    //         duration: Toast.durations.LONG,
+                    //         textColor: "#fff",
+                    //         backgroundColor: APP_COLOR.GREEN,
+                    //         opacity: 1,
+                    //     }
+                    // );
+                } catch (apiError: any) {
+                    Toast.show(`Error when calling fan API: ${apiError.message}`, {
+                        duration: Toast.durations.LONG,
+                        textColor: "#fff",
+                        backgroundColor: "red",
+                        opacity: 1,
+                    });
+                }
             } else {
-                console.log("Fan level unchanged, no API call needed");
+                setPreviousTemp(currentTemp);
             }
         } catch (err: any) {
-            console.error("Error in automatic fan control:", err);
-            Toast.show(`Lỗi khi tự động điều khiển quạt: ${err.message}`, {
+            Toast.show(`Error when calling fan API: ${err.message}`, {
                 duration: Toast.durations.LONG,
                 textColor: "#fff",
                 backgroundColor: "red",
@@ -88,79 +165,53 @@ const FanConfigScreen = () => {
     };
 
     useEffect(() => {
-        if (!config?.iotName || !config?.iotApiKey || !config?.id) {
-            return;
-        }
+        if (!config?.iotName || !config?.iotApiKey || !config?.id) return;
 
-        const fetchData = async () => {
-            try {
-                const [tempRes] = await Promise.all([
-                    fetchSingleTemperatureFeedAPI(config.iotName, config.iotApiKey, 1),
-                ]);
-                setTemRes(parseFloat(tempRes[0].value));
-                console.log("Temperature:", tempRes[0].value);
-            } catch (err) {
-                console.error("Fetch feed error:", err);
-                setError("Failed to fetch temperature");
-            }
-        };
-
-        const fetchFanData = async () => {
-            try {
-                const resFanList = await getFanAPI(config.id);
-                const validFanConfig = Array.isArray(resFanList)
-                    ? resFanList
-                        .filter((fan: IFan) => fan.fanOns && fan.fanOns.length > 0)
-                        .sort(
-                            (a: IFan, b: IFan) =>
-                                new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-                        )[0]
-                    : null;
-
-                if (validFanConfig) {
-                    setFanConfig(validFanConfig);
-                    setFanOns(validFanConfig.fanOns || []);
-                } else {
-                    setFanConfig(null);
-                    setFanOns([]);
-                }
-            } catch (err) {
-                console.error("Fetch fan config error:", err);
-                setError("Failed to fetch fan configuration");
-            }
-        };
-
-        fetchData();
+        fetchTemperature();
         fetchFanData();
 
-        let interval: NodeJS.Timeout | null = null;
-        if (isAutomatic && fanOns.length > 0) {
-            checkTemperatureAndControlFan();
-            interval = setInterval(checkTemperatureAndControlFan, 10000)
-        }
-
-        return () => {
-            if (interval) {
-                clearInterval(interval);
+        const interval = setInterval(() => {
+            if (isAutomatic && fanOns.length > 0) {
+                checkTemperatureAndControlFan();
+            } else {
+                fetchTemperature();
             }
-        };
-    }, [config?.iotName, config?.iotApiKey, config?.id, isAutomatic]);
+        }, 10000);
 
-    const toggleAutomatic = () => {
-        setIsAutomatic((prev) => !prev);
-        if (!isAutomatic) {
-            checkTemperatureAndControlFan();
+        return () => clearInterval(interval);
+    }, [config?.iotName, config?.iotApiKey, config?.id, isAutomatic, fanOns.length]);
+
+    const toggleAutomatic = async () => {
+        const newValue = !isAutomatic;
+        setIsAutomatic(newValue);
+        if (newValue && config?.id) {
+            await checkTemperatureAndControlFan();
+        }
+        if (config?.id) {
+            const controlledMode = newValue ? "Automatic" : "Manual";
+            const fanOnsData: IFanOnAPI[] = fanOns.map(({ intensity, threshold }) => ({
+                intensity: intensity.toString(),
+                threshold: threshold.toString(),
+            }));
+            try {
+                await updateFanAPI(config.id, controlledMode, fanOnsData);
+                showToast(`Switched to ${controlledMode.toLowerCase()} mode`);
+            } catch (err: any) {
+                showToast(`Error updating mode: ${err.message}`, true);
+            }
         }
     };
 
     const updateFanOn = (index: number, key: "intensity" | "threshold", value: string) => {
-        const updated = [...fanOns];
-        updated[index][key] = parseInt(value) || 0;
-        setFanOns(updated);
+        setFanOns((prev) => {
+            const updated = [...prev];
+            updated[index][key] = parseInt(value) || 0;
+            return updated;
+        });
     };
 
     const addFanOn = () => {
-        setFanOns((prev) => [...prev, { intensity: 0, threshold: 0, _id: "" }]);
+        setFanOns((prev) => [...prev, { intensity: 0, threshold: 0 }]);
     };
 
     const removeFanOn = (index: number) => {
@@ -169,16 +220,11 @@ const FanConfigScreen = () => {
 
     const handleUpdateConfigFan = async () => {
         if (!config?.id) {
-            Toast.show("Người dùng chưa cấu hình tài khoản", {
-                duration: Toast.durations.LONG,
-                textColor: "#fff",
-                backgroundColor: "red",
-                opacity: 1,
-            });
+            showToast("Account not configured", true);
             return;
         }
-        const controlledMode = "Automatic";
-        const fanOnsData = fanOns.map(({ intensity, threshold }) => ({
+        const controlledMode = isAutomatic ? "Automatic" : "Manual";
+        const fanOnsData: IFanOnAPI[] = fanOns.map(({ intensity, threshold }) => ({
             intensity: intensity.toString(),
             threshold: threshold.toString(),
         }));
@@ -187,21 +233,10 @@ const FanConfigScreen = () => {
             setLoading(true);
             await updateFanAPI(config.id, controlledMode, fanOnsData);
             setIsEditing(false);
-            Toast.show("Cập nhật cấu hình quạt thành công!", {
-                duration: Toast.durations.LONG,
-                textColor: "#fff",
-                backgroundColor: APP_COLOR.GREEN,
-                opacity: 1,
-            });
-            checkTemperatureAndControlFan();
-        } catch (err) {
-            console.error("Update fan config error:", err);
-            Toast.show("Không thể cập nhật cấu hình quạt.", {
-                duration: Toast.durations.LONG,
-                textColor: "#fff",
-                backgroundColor: "red",
-                opacity: 1,
-            });
+            showToast("Fan configuration updated successfully");
+            await checkTemperatureAndControlFan();
+        } catch (err: any) {
+            showToast(`Error updating fan configuration: ${err.message}`, true);
         } finally {
             setLoading(false);
         }
@@ -209,32 +244,16 @@ const FanConfigScreen = () => {
 
     const handleControllerFan = async () => {
         if (!config?.iotApiKey || !config?.iotName) {
-            Toast.show("Người dùng chưa cấu hình tài khoản", {
-                duration: Toast.durations.LONG,
-                textColor: "#fff",
-                backgroundColor: "red",
-                opacity: 1,
-            });
+            showToast("Account not configured", true);
             return;
         }
         const value = `2:${fanLevel}`;
         try {
             setLoading(true);
             await feetControllerAPI(value, config.iotName, config.iotApiKey);
-            Toast.show(`Bật quạt thành công với cường độ ${fanLevel}%.`, {
-                duration: Toast.durations.LONG,
-                textColor: "#fff",
-                backgroundColor: APP_COLOR.GREEN,
-                opacity: 1,
-            });
+            showToast(`Fan turned on at ${fanLevel}% intensity`);
         } catch (err: any) {
-            console.error("Fan control error:", err);
-            Toast.show(`Lỗi khi bật quạt: ${err.message}`, {
-                duration: Toast.durations.LONG,
-                textColor: "#fff",
-                backgroundColor: "red",
-                opacity: 1,
-            });
+            showToast(`Error turning on fan: ${err.message}`, true);
         } finally {
             setIsAutomatic(false);
             setLoading(false);
@@ -245,7 +264,7 @@ const FanConfigScreen = () => {
         <View>
             <View style={styles.rowContainer}>
                 <View style={styles.fanCard}>
-                    <Text style={styles.title}>Mức độ quạt</Text>
+                    <Text style={styles.title}>Fan Intensity</Text>
                     <AnimatedCircularProgress
                         size={120}
                         width={10}
@@ -265,17 +284,13 @@ const FanConfigScreen = () => {
                         value={fanLevel}
                         minimumTrackTintColor={APP_COLOR.GREEN}
                         maximumTrackTintColor="#B0BEC5"
-                        onValueChange={(val) => setFanLevel(val)}
+                        onValueChange={setFanLevel}
                     />
                     <ShareButton
-                        title={fanLevel === 0 ? "Tắt quạt" : "Bật quạt"}
+                        title={fanLevel === 0 ? "Turn Off Fan" : "Turn On Fan"}
                         icon={<FontAwesome5 name="fan" size={18} color="#fff" />}
                         onPress={handleControllerFan}
-                        textStyle={{
-                            color: "#fff",
-                            fontSize: 12,
-                            paddingVertical: 4,
-                        }}
+                        textStyle={{ color: "#fff", fontSize: 12, paddingVertical: 4 }}
                         buttonStyle={{
                             justifyContent: "center",
                             borderRadius: 20,
@@ -286,50 +301,43 @@ const FanConfigScreen = () => {
                         pressStyle={{ alignSelf: "stretch" }}
                     />
                 </View>
-
                 <View style={styles.themometerCard}>
                     <Thermometer temperature={tempRes} />
                 </View>
             </View>
-
             <View style={styles.card}>
                 <View style={styles.switchRow}>
-                    <Text style={styles.label}>Chế độ tự động</Text>
+                    <Text style={styles.label}>Automatic Mode</Text>
                     <Switch
                         trackColor={{ false: "#B0BEC5", true: "#81C784" }}
                         thumbColor={isAutomatic ? "#FFFFFF" : "#ECEFF1"}
+                        ios_backgroundColor="#B0BEC5"
                         onValueChange={toggleAutomatic}
                         value={isAutomatic}
                     />
                 </View>
             </View>
-
             {isAutomatic && (
                 <>
                     <View style={styles.card}>
                         <View style={styles.switchRow}>
-                            <Text style={styles.label}>Chỉnh sửa cấu hình</Text>
+                            <Text style={styles.label}>Update Configuration</Text>
                             <Switch
                                 trackColor={{ false: "#B0BEC5", true: "#81C784" }}
                                 thumbColor={isEditing ? "#FFFFFF" : "#ECEFF1"}
+                                ios_backgroundColor="#B0BEC5"
                                 onValueChange={() => setIsEditing((prev) => !prev)}
                                 value={isEditing}
                             />
                         </View>
                     </View>
-
                     {fanOns.length > 0 ? (
                         fanOns.map((item, index) => (
-                            <View key={item._id || index} style={styles.card}>
-                                <Text style={styles.cardTitle}>Mức cảnh báo #{index + 1}</Text>
+                            <View key={item._id || `fanOn-${index}`} style={styles.card}>
+                                <Text style={styles.cardTitle}>Warning Level #{index + 1}</Text>
                                 <View style={styles.infoRow}>
                                     <Text style={styles.icon}>
-                                        <FontAwesome5
-                                            name="thermometer-half"
-                                            size={20}
-                                            color={APP_COLOR.GREEN}
-                                            style={{ width: 30 }}
-                                        />
+                                        <FontAwesome5 name="thermometer-half" size={20} color={APP_COLOR.GREEN} style={{ width: 30 }} />
                                     </Text>
                                     <Text style={styles.infoLabel}>Threshold</Text>
                                     {isEditing ? (
@@ -347,12 +355,7 @@ const FanConfigScreen = () => {
                                 </View>
                                 <View style={styles.infoRow}>
                                     <Text style={styles.icon}>
-                                        <Feather
-                                            name="wind"
-                                            size={20}
-                                            color={APP_COLOR.GREEN}
-                                            style={{ width: 30 }}
-                                        />
+                                        <Feather name="wind" size={20} color={APP_COLOR.GREEN} style={{ width: 30 }} />
                                     </Text>
                                     <Text style={styles.infoLabel}>Intensity</Text>
                                     {isEditing ? (
@@ -378,16 +381,15 @@ const FanConfigScreen = () => {
                             </View>
                         ))
                     ) : (
-                        <Text style={styles.noDataText}>Chưa có dữ liệu mức độ cảnh báo.</Text>
+                        <Text style={styles.noDataText}>No warning level data available</Text>
                     )}
-
                     {isEditing && (
                         <>
                             <TouchableOpacity onPress={addFanOn} style={styles.addButton}>
-                                <Text style={styles.addButtonText}>Thêm mức độ cảnh báo</Text>
+                                <Text style={styles.addButtonText}>Add Warning Level</Text>
                             </TouchableOpacity>
                             <TouchableOpacity onPress={handleUpdateConfigFan} style={styles.updateButton}>
-                                <Text style={styles.updateButtonText}>Lưu cập nhật</Text>
+                                <Text style={styles.updateButtonText}>Save Update</Text>
                             </TouchableOpacity>
                         </>
                     )}

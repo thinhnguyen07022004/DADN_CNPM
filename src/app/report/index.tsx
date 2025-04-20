@@ -14,9 +14,9 @@ import { Calendar } from "react-native-calendars";
 import { View } from "react-native";
 import LoadingOverlay from "@/components/loading/overlay";
 import dayjs from "dayjs";
-import utc from "dayjs/plugin/utc"; // Thêm plugin UTC
+import utc from "dayjs/plugin/utc";
 
-dayjs.extend(utc); // Kích hoạt plugin UTC
+dayjs.extend(utc);
 
 const lightChartConfig = {
     backgroundGradientFrom: "#e0f7fa",
@@ -93,7 +93,6 @@ const ReportPage = () => {
 
     const [isFilter, setIsFilter] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
-    const [selected, setSelected] = useState('');
 
     const toggleFilter = () => {
         setIsFilter(previousState => !previousState);
@@ -136,14 +135,12 @@ const ReportPage = () => {
             };
 
             const fetchData = async () => {
-                // setIsLoading(true);
                 try {
                     let lightRes, tempRes, humidRes;
 
                     if (isFilter && dateRange.startDate && dateRange.endDate) {
                         const startTime = dayjs(dateRange.startDate).utc().toISOString().slice(0, 16) + "Z";
                         const endTime = dayjs(dateRange.endDate).utc().toISOString().slice(0, 16) + "Z";
-                        // console.log("Fetching data in time range:", { startTime, endTime });
 
                         [lightRes, tempRes, humidRes] = await Promise.all([
                             fetchLightFeedInTimeRangeAPI(
@@ -180,14 +177,13 @@ const ReportPage = () => {
                         tempRes.length === 0 &&
                         humidRes.length === 0
                     ) {
-                        console.log("Không có dữ liệu trong khoảng thời gian này.");
                     } else {
                         processFeedData(lightRes, setLightChartData);
                         processFeedData(tempRes, setTemperatureChartData);
                         processFeedData(humidRes, setHumidityChartData);
                     }
                 } catch (err) {
-                    console.log("Không thể tải dữ liệu, vui lòng thử lại.");
+                    console.log("Unable to load data, please try again.");
                 } finally {
                     setIsLoading(false);
                 }
@@ -195,11 +191,11 @@ const ReportPage = () => {
 
             fetchData();
 
-            // const interval = setInterval(() => {
-            //     fetchData();
-            // }, 10000); // 5000ms = 5 giây
+            const interval = setInterval(() => {
+                fetchData();
+            }, 10000);
 
-            // return () => clearInterval(interval);
+            return () => clearInterval(interval);
         }
     }, [config?.iotName, config?.iotApiKey, dateRange]);
 
@@ -293,7 +289,7 @@ const ReportPage = () => {
                 {lightChartData.labels.length > 0 ? (
                     <LineChart chartData={lightChartData} chartConfig={lightChartConfig} />
                 ) : (
-                    <Text style={{ textAlign: "center" }}>Đang tải dữ liệu độ sáng...</Text>
+                    <Text style={{ textAlign: "center" }}>Loading brightness data...</Text>
                 )}
                 <Text style={{ fontSize: 15, textAlign: "center", marginBottom: 20, marginTop: 5, fontWeight: 500 }}>
                     Light Chart Data Report
@@ -306,7 +302,7 @@ const ReportPage = () => {
                         chartConfig={temperatureChartConfig}
                     />
                 ) : (
-                    <Text style={{ textAlign: "center" }}>Đang tải dữ liệu nhiệt độ...</Text>
+                    <Text style={{ textAlign: "center" }}>Loading temperature data...</Text>
                 )}
                 <Text style={{ fontSize: 15, textAlign: "center", marginBottom: 20, marginTop: 5, fontWeight: 500 }}>
                     Temperature Chart Data Report
@@ -319,7 +315,7 @@ const ReportPage = () => {
                         chartConfig={humidityChartConfig}
                     />
                 ) : (
-                    <Text style={{ textAlign: "center" }}>Đang tải dữ liệu độ ẩm...</Text>
+                    <Text style={{ textAlign: "center" }}>Loading humidity data...</Text>
                 )}
                 <Text style={{ fontSize: 15, textAlign: "center", marginBottom: 20, marginTop: 5, fontWeight: 500 }}>
                     Humidity Chart Data Report

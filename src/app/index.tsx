@@ -6,13 +6,12 @@ import falogo from '@/assets/auth/facebook.png'
 import gglogo from '@/assets/auth/google.png'
 import { LinearGradient } from 'expo-linear-gradient';
 import TextBetweenLine from "@/components/button/text.between.line";
-import { Link, Redirect, router } from "expo-router";
+import { Link, router } from "expo-router";
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
         marginHorizontal: 10,
-
     },
     welcomeText: {
         flex: 0.6,
@@ -35,7 +34,6 @@ const styles = StyleSheet.create({
         color: "#FFAA00",
         marginVertical: 30,
         marginLeft: 90
-
     },
     footer: {
         color: "white",
@@ -80,13 +78,13 @@ const WelcomePage = () => {
                             </Text>
                         </View>
                         <Text style={styles.footer}>
-                            Nông trại thông minh - Hiệu quả cao - Tiết kiệm chi phí
+                            Smart Farm - High Efficiency - Cost Saving
                         </Text>
                     </View>
                     <View style={styles.welcomeButton}>
                         <TextBetweenLine
                             textStyle={{ color: "white" }}
-                            title="Đăng nhập với" />
+                            title="Log In With" />
                         <View style={{
                             flexDirection: "row",
                             justifyContent: "center",
@@ -122,7 +120,7 @@ const WelcomePage = () => {
                         </View>
                         <View>
                             <ShareButton
-                                title="Đăng nhập với số điện thoại"
+                                title="Login With Phone Number"
                                 onPress={() => router.navigate("/login")}
                                 textStyle={{ color: "#fff", paddingVertical: 5 }}
                                 buttonStyle={{
@@ -146,7 +144,7 @@ const WelcomePage = () => {
                                 textAlign: "center",
                                 color: "white"
                             }}>
-                                Chưa có tài khoản?
+                                Don't have an account?
                             </Text>
                             <Link href={"/(auth)/signup"}>
                                 <Text style={{
@@ -154,7 +152,7 @@ const WelcomePage = () => {
                                     color: "white",
                                     textDecorationLine: "underline"
                                 }}>
-                                    Đăng ký.
+                                    Sign Up.
                                 </Text>
                             </Link>
                         </View>

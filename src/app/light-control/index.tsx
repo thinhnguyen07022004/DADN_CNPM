@@ -1,29 +1,15 @@
 import React, { useEffect, useState } from "react";
-import {
-    View,
-    Text,
-    Switch,
-    FlatList,
-    StyleSheet,
-    TouchableOpacity,
-    TextInput,
-    Dimensions,
-} from "react-native";
+import { View, Text, Switch, FlatList, StyleSheet, TouchableOpacity, TextInput } from "react-native";
 import { FontAwesome5 } from "@expo/vector-icons";
-import Feather from "@expo/vector-icons/Feather";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import ColorPicker from "react-native-wheel-color-picker";
 import { APP_COLOR } from "@/utils/constant";
 import ShareButton from "@/components/button/share.button";
 import { useCurrentApp } from "@/context/app.context";
-import {
-    feetControllerAPI,
-    fetchSingleTemperatureFeedAPI,
-    getLightAPI,
-    updateLightAPI,
-} from "@/utils/api";
+import { feetControllerAPI, fetchSingleLightFeedAPI, getLightAPI, updateLightAPI, } from "@/utils/api";
 import Toast from "react-native-root-toast";
 import LightSensor from "@/components/lightcontrol/light.sensor";
+import { router } from "expo-router";
 
 interface ILightOn {
     color: string;
@@ -39,30 +25,21 @@ interface ILight {
     offTime?: string;
 }
 
-const { width: SCREEN_WIDTH } = Dimensions.get("window");
-
 const LightConfigScreen = () => {
     const { config } = useCurrentApp();
     const [lightColor, setLightColor] = useState("#000000");
     const [previousColor, setPreviousColor] = useState("#000000");
-    const [brightness, setBrightness] = useState(50); // Giả lập độ sáng từ 0-100
     const [tempRes, setTemRes] = useState<number>(0);
     const [loading, setLoading] = useState<boolean>(false);
-    const [error, setError] = useState<string | null>(null);
     const [isAutomatic, setIsAutomatic] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [lightsOns, setLightsOns] = useState<ILightOn[]>([]);
     const [lightConfig, setLightConfig] = useState<ILight | null>(null);
-    const [previousTemp, setPreviousTemp] = useState<number | null>(null);
+    const [previousLight, setPreviousLight] = useState<number | null>(null);
+    const [onTime, setOnTime] = useState<string>("18:30");
+    const [offTime, setOffTime] = useState<string>("6:00");
 
-    useEffect(() => {
-        const interval = setInterval(() => {
-            setBrightness(Math.floor(Math.random() * 101));
-        }, 5000);
-        return () => clearInterval(interval);
-    }, []);
-
-    const checkTemperatureAndControlLight = async () => {
+    const checkLightFeedAndControlLight = async () => {
         if (!config?.iotApiKey || !config?.iotName || !isAutomatic) {
             return;
         }
@@ -70,40 +47,67 @@ const LightConfigScreen = () => {
         try {
             setLoading(true);
             const [tempRes] = await Promise.all([
-                fetchSingleTemperatureFeedAPI(config.iotName, config.iotApiKey, 1),
+                fetchSingleLightFeedAPI(config.iotName, config.iotApiKey, 1),
             ]);
-            const currentTemp = parseFloat(tempRes[0].value);
-            if (previousTemp !== null && Math.abs(currentTemp - previousTemp) < 0.1) {
-                return;
-            }
+            const currentLight = parseInt(tempRes[0].value, 10);
 
-            setPreviousTemp(currentTemp);
-            setTemRes(currentTemp);
+            if (isNaN(currentLight)) {
+                throw new Error("Invalid light sensor data");
+            }
+            setTemRes(currentLight);
 
             let newColor = "#000000";
+            let conditionMet = false;
+
             for (const lightOn of lightsOns) {
-                if (currentTemp >= lightOn.threshold) {
+                const lightCondition = currentLight < lightOn.threshold;
+                if (lightCondition) {
                     newColor = lightOn.color;
+                    conditionMet = true;
+                    break;
                 }
             }
 
-            if (newColor !== lightColor) {
-                const value = `3:${newColor}`;
-                await feetControllerAPI(value, config.iotName, config.iotApiKey);
-                setLightColor(newColor);
-                setPreviousColor(newColor);
-                Toast.show(`Cập nhật đèn với màu ${newColor}`, {
-                    duration: Toast.durations.LONG,
-                    textColor: "#fff",
-                    backgroundColor: APP_COLOR.GREEN,
-                    opacity: 1,
-                });
+            let shouldTurnOff = true;
+            for (const lightOn of lightsOns) {
+                if (currentLight < lightOn.threshold) {
+                    shouldTurnOff = false;
+                    break;
+                }
+            }
+
+            if (newColor !== lightColor || shouldTurnOff) {
+                const value = `1:${newColor}`;
+                try {
+                    await feetControllerAPI(value, config.iotName, config.iotApiKey);
+                    setLightColor(newColor);
+                    setPreviousColor(newColor);
+                    setPreviousLight(currentLight);
+                    // Toast.show(
+                    //     newColor === "#000000"
+                    //         ? "Tắt đèn do ánh sáng đủ mạnh"
+                    //         : `Bật đèn với màu ${newColor}`,
+                    //     {
+                    //         duration: Toast.durations.LONG,
+                    //         textColor: "#fff",
+                    //         backgroundColor: APP_COLOR.GREEN,
+                    //         opacity: 1,
+                    //     }
+                    // );
+                } catch (apiError: any) {
+                    Toast.show(`Error calling the light API: ${apiError.message}`, {
+                        duration: Toast.durations.LONG,
+                        textColor: "#fff",
+                        backgroundColor: "red",
+                        opacity: 1,
+                    });
+                }
             } else {
-                console.log("Light color unchanged, no API call needed");
+                setPreviousLight(currentLight);
+
             }
         } catch (err: any) {
-            console.error("Error in automatic light control:", err);
-            Toast.show(`Lỗi khi tự động điều khiển đèn: ${err.message}`, {
+            Toast.show(`Error when automatically controlling lights: ${err.message}`, {
                 duration: Toast.durations.LONG,
                 textColor: "#fff",
                 backgroundColor: "red",
@@ -116,56 +120,70 @@ const LightConfigScreen = () => {
 
     useEffect(() => {
         if (!config?.iotName || !config?.iotApiKey || !config?.id) {
+            Toast.show("User has not configured account", {
+                duration: Toast.durations.LONG,
+                textColor: "#fff",
+                backgroundColor: "red",
+                opacity: 1,
+            });
+            router.navigate("/(tabs)/configuration")
             return;
         }
 
-        const fetchData = async () => {
+        const fetchLightSensorData = async () => {
+            setLoading(true);
             try {
                 const [tempRes] = await Promise.all([
-                    fetchSingleTemperatureFeedAPI(config.iotName, config.iotApiKey, 1),
+                    fetchSingleLightFeedAPI(config.iotName, config.iotApiKey, 1),
                 ]);
-                setTemRes(parseFloat(tempRes[0].value));
+                setTemRes(parseInt(tempRes[0].value, 10));
             } catch (err) {
-                console.error("Fetch feed error:", err);
-                setError("Failed to fetch temperature");
+                Toast.show("Failed to fetch light sensor data", {
+                    duration: Toast.durations.LONG,
+                    textColor: "#fff",
+                    backgroundColor: "red",
+                    opacity: 1,
+                });
+            }
+            finally {
+                setLoading(false);
             }
         };
 
-        const fetchLightData = async () => {
+        const fetchWarningLightData = async () => {
             try {
                 const resLightList = await getLightAPI(config.id);
-                const validLightConfig = Array.isArray(resLightList)
-                    ? resLightList
-                        .filter(
-                            (light: ILight) => light.lightsOns && light.lightsOns.length > 0
-                        )
-                        .sort(
-                            (a: ILight, b: ILight) =>
-                                new Date(b.updatedAt).getTime() -
-                                new Date(a.updatedAt).getTime()
-                        )[0]
-                    : null;
+                const data = Array.isArray(resLightList.data) ? resLightList.data : [];
+                const firstConfig = data.length > 0 ? data[0] : null;
 
-                if (validLightConfig) {
-                    setLightConfig(validLightConfig);
-                    setLightsOns(validLightConfig.lightsOns || []);
+                if (firstConfig) {
+                    setLightConfig(firstConfig);
+                    setLightsOns(firstConfig.lightOns || []);
+                    setOnTime(firstConfig.onTime || "18:30");
+                    setOffTime(firstConfig.offTime || "6:00");
                 } else {
                     setLightConfig(null);
                     setLightsOns([]);
                 }
             } catch (err) {
-                console.error("Fetch light config error:", err);
-                setError("Failed to fetch light configuration");
+                Toast.show("Failed to fetch light configuration", {
+                    duration: Toast.durations.LONG,
+                    textColor: "#fff",
+                    backgroundColor: "red",
+                    opacity: 1,
+                });
             }
         };
-
-        fetchData();
-        fetchLightData();
-
+        fetchLightSensorData();
+        fetchWarningLightData();
         let interval: NodeJS.Timeout | null = null;
         if (isAutomatic && lightsOns.length > 0) {
-            checkTemperatureAndControlLight();
-            interval = setInterval(checkTemperatureAndControlLight, 10000);
+            checkLightFeedAndControlLight();
+            interval = setInterval(checkLightFeedAndControlLight, 10000);
+        }
+        else {
+            fetchLightSensorData();
+            interval = setInterval(fetchLightSensorData, 10000);
         }
 
         return () => {
@@ -173,25 +191,31 @@ const LightConfigScreen = () => {
                 clearInterval(interval);
             }
         };
-    }, [config?.iotName, config?.iotApiKey, config?.id, isAutomatic, lightsOns]);
+    }, [config?.iotName, config?.iotApiKey, config?.id, isAutomatic]);
 
     const toggleAutomatic = () => {
         setIsAutomatic((prev) => !prev);
         if (!isAutomatic) {
-            checkTemperatureAndControlLight();
+            checkLightFeedAndControlLight();
         }
     };
 
     const updateLightOn = (
         index: number,
-        key: "color" | "threshold",
+        key: "color" | "threshold" | "onTime" | "offTime",
         value: string
     ) => {
         const updated = [...lightsOns];
         if (key === "color") {
             updated[index].color = value;
         } else if (key === "threshold") {
-            updated[index].threshold = parseInt(value) || 0;
+            updated[index].threshold = parseInt(value, 10) || 0;
+        }
+        else if (key === "onTime") {
+            setOnTime(value);
+        }
+        else if (key === "offTime") {
+            setOffTime(value);
         }
         setLightsOns(updated);
     };
@@ -209,7 +233,7 @@ const LightConfigScreen = () => {
 
     const handleUpdateConfigLight = async () => {
         if (!config?.id) {
-            Toast.show("Người dùng chưa cấu hình tài khoản", {
+            Toast.show("User has not configured account", {
                 duration: Toast.durations.LONG,
                 textColor: "#fff",
                 backgroundColor: "red",
@@ -218,16 +242,13 @@ const LightConfigScreen = () => {
             return;
         }
         const controlledMode = "Automatic";
-        const onTime = lightConfig?.onTime || "18:30";
-        const offTime = lightConfig?.offTime || "6:00";
         const lightsOnsData = lightsOns.map(({ color, threshold }) => ({
             color,
             threshold: threshold.toString(),
         }));
-
         try {
             setLoading(true);
-            await updateLightAPI(
+            const res = await updateLightAPI(
                 config.id,
                 controlledMode,
                 onTime,
@@ -235,16 +256,15 @@ const LightConfigScreen = () => {
                 lightsOnsData
             );
             setIsEditing(false);
-            Toast.show("Cập nhật cấu hình đèn thành công!", {
+            Toast.show("Light configuration updated successfully!", {
                 duration: Toast.durations.LONG,
                 textColor: "#fff",
                 backgroundColor: APP_COLOR.GREEN,
                 opacity: 1,
             });
-            checkTemperatureAndControlLight();
+            checkLightFeedAndControlLight();
         } catch (err) {
-            console.error("Update light config error:", err);
-            Toast.show("Không thể cập nhật cấu hình đèn.", {
+            Toast.show("Unable to update light configuration.", {
                 duration: Toast.durations.LONG,
                 textColor: "#fff",
                 backgroundColor: "red",
@@ -257,7 +277,7 @@ const LightConfigScreen = () => {
 
     const handleControllerLight = async () => {
         if (!config?.iotApiKey || !config?.iotName) {
-            Toast.show("Người dùng chưa cấu hình tài khoản", {
+            Toast.show("User has not configured account", {
                 duration: Toast.durations.LONG,
                 textColor: "#fff",
                 backgroundColor: "red",
@@ -266,7 +286,7 @@ const LightConfigScreen = () => {
             return;
         }
         if (!/^#[0-9A-Fa-f]{6}$/.test(lightColor)) {
-            Toast.show("Mã màu không hợp lệ", {
+            Toast.show("Invalid color code", {
                 duration: Toast.durations.LONG,
                 textColor: "#fff",
                 backgroundColor: "red",
@@ -274,19 +294,27 @@ const LightConfigScreen = () => {
             });
             return;
         }
-        const value = `3:${lightColor}`;
+        const value = `1:${lightColor}`;
         try {
             setLoading(true);
             await feetControllerAPI(value, config.iotName, config.iotApiKey);
-            Toast.show(`Bật đèn thành công với màu ${lightColor}.`, {
-                duration: Toast.durations.LONG,
-                textColor: "#fff",
-                backgroundColor: APP_COLOR.GREEN,
-                opacity: 1,
-            });
+            {
+                lightColor === "#000000" ?
+                    Toast.show(`Lights off successfully.`, {
+                        duration: Toast.durations.LONG,
+                        textColor: "#fff",
+                        backgroundColor: APP_COLOR.GREEN,
+                        opacity: 1,
+                    })
+                    : Toast.show(`Turn on the light successfully with color ${lightColor}.`, {
+                        duration: Toast.durations.LONG,
+                        textColor: "#fff",
+                        backgroundColor: APP_COLOR.GREEN,
+                        opacity: 1,
+                    })
+            }
         } catch (err: any) {
-            console.error("Light control error:", err);
-            Toast.show(`Lỗi khi bật đèn: ${err.message}`, {
+            Toast.show(`Error when turning on the light: ${err.message}`, {
                 duration: Toast.durations.LONG,
                 textColor: "#fff",
                 backgroundColor: "red",
@@ -298,24 +326,8 @@ const LightConfigScreen = () => {
         }
     };
 
-    const commitColor = () => {
-        setPreviousColor(lightColor);
-        Toast.show("Màu đã được áp dụng!", {
-            duration: Toast.durations.LONG,
-            textColor: "#fff",
-            backgroundColor: APP_COLOR.GREEN,
-            opacity: 1,
-        });
-    };
-
     const revertColor = () => {
-        setLightColor(previousColor);
-        Toast.show("Màu đã được khôi phục!", {
-            duration: Toast.durations.LONG,
-            textColor: "#fff",
-            backgroundColor: APP_COLOR.ORANGE,
-            opacity: 1,
-        });
+        setLightColor("#000000");
     };
 
     const renderContent = () => (
@@ -338,7 +350,7 @@ const LightConfigScreen = () => {
                     <View style={styles.controlsContainer}>
                         <ShareButton
                             title={"Commit"}
-                            onPress={commitColor}
+                            onPress={handleControllerLight}
                             textStyle={{
                                 color: "#fff",
                                 fontSize: 12,
@@ -372,13 +384,13 @@ const LightConfigScreen = () => {
                     </View>
                 </View>
                 <View style={styles.themometerCard}>
-                    <LightSensor temperature={tempRes} />
+                    <LightSensor lightSensor={tempRes} />
                 </View>
             </View>
 
             <View style={styles.card}>
                 <View style={styles.switchRow}>
-                    <Text style={styles.label}>Chế độ tự động</Text>
+                    <Text style={styles.label}>Automatic Mode</Text>
                     <Switch
                         trackColor={{ false: "#B0BEC5", true: "#81C784" }}
                         thumbColor={isAutomatic ? "#FFFFFF" : "#ECEFF1"}
@@ -392,7 +404,7 @@ const LightConfigScreen = () => {
                 <>
                     <View style={styles.card}>
                         <View style={styles.switchRow}>
-                            <Text style={styles.label}>Chỉnh sửa cấu hình</Text>
+                            <Text style={styles.label}>Edit configuration</Text>
                             <Switch
                                 trackColor={{ false: "#B0BEC5", true: "#81C784" }}
                                 thumbColor={isEditing ? "#FFFFFF" : "#ECEFF1"}
@@ -402,14 +414,47 @@ const LightConfigScreen = () => {
                         </View>
                     </View>
 
+                    {isEditing && (
+                        <View style={styles.card}>
+                            <Text style={styles.cardTitle}>Time Settings</Text>
+                            <View style={styles.infoRow}>
+                                <Text style={styles.icon}>
+                                    <FontAwesome5 name="clock" size={20} color={APP_COLOR.GREEN} style={{ width: 30 }} />
+                                </Text>
+                                <Text style={styles.infoLabel}>On Time</Text>
+                                <TextInput
+                                    style={styles.input}
+                                    value={onTime}
+                                    onChangeText={setOnTime}
+                                    placeholder="On Time (HH:MM)"
+                                    placeholderTextColor="#B0BEC5"
+                                />
+                            </View>
+                            <View style={styles.infoRow}>
+                                <Text style={styles.icon}>
+                                    <FontAwesome5 name="clock" size={20} color={APP_COLOR.GREEN} style={{ width: 30 }} />
+                                </Text>
+                                <Text style={styles.infoLabel}>Off Time</Text>
+                                <TextInput
+                                    style={styles.input}
+                                    value={offTime}
+                                    onChangeText={setOffTime}
+                                    placeholder="Off Time (HH:MM)"
+                                    placeholderTextColor="#B0BEC5"
+                                />
+                            </View>
+                        </View>
+                    )}
+
                     {lightsOns.length > 0 ? (
                         lightsOns.map((item, index) => (
                             <View key={item._id || index} style={styles.card}>
-                                <Text style={styles.cardTitle}>Mức cảnh báo #{index + 1}</Text>
+                                <Text style={styles.cardTitle}>Warning Level #{index + 1}</Text>
+
                                 <View style={styles.infoRow}>
                                     <Text style={styles.icon}>
                                         <FontAwesome5
-                                            name="thermometer-half"
+                                            name="lightbulb"
                                             size={20}
                                             color={APP_COLOR.GREEN}
                                             style={{ width: 30 }}
@@ -424,37 +469,37 @@ const LightConfigScreen = () => {
                                             onChangeText={(text) =>
                                                 updateLightOn(index, "threshold", text)
                                             }
-                                            placeholder="Threshold (°C)"
+                                            placeholder="Threshold (%)"
                                             placeholderTextColor="#B0BEC5"
                                         />
                                     ) : (
                                         <Text style={styles.infoValueOrange}>
-                                            {item.threshold} °C
+                                            {item.threshold} %
                                         </Text>
                                     )}
                                 </View>
+
                                 <View style={styles.infoRow}>
                                     <Text style={styles.icon}>
-                                        <Feather
-                                            name="sun"
+                                        <FontAwesome5
+                                            name="dot-circle"
                                             size={20}
                                             color={APP_COLOR.GREEN}
                                             style={{ width: 30 }}
                                         />
                                     </Text>
-                                    <Text style={styles.infoLabel}>Color</Text>
+                                    <Text style={styles.infoLabel}>Light Color</Text>
                                     {isEditing ? (
                                         <ColorPicker
                                             color={item.color}
                                             onColorChangeComplete={(color: string) => {
-                                                console.log("Selected color small:", color);
                                                 updateLightOn(index, "color", color);
                                             }}
                                             thumbSize={20}
                                             sliderSize={20}
                                             noSnap={true}
                                             row={false}
-                                            swatches={true}
+                                            swatches={false}
                                             swatchesLast={true}
                                         />
                                     ) : (
@@ -466,6 +511,9 @@ const LightConfigScreen = () => {
                                         />
                                     )}
                                 </View>
+
+
+
                                 {isEditing && (
                                     <TouchableOpacity
                                         onPress={() => removeLightOn(index)}
@@ -480,35 +528,38 @@ const LightConfigScreen = () => {
                         ))
                     ) : (
                         <Text style={styles.noDataText}>
-                            Chưa có dữ liệu mức độ cảnh báo.
+                            No warning level data available.
                         </Text>
                     )}
 
                     {isEditing && (
                         <>
                             <TouchableOpacity onPress={addLightOn} style={styles.addButton}>
-                                <Text style={styles.addButtonText}>Thêm mức độ cảnh báo</Text>
+                                <Text style={styles.addButtonText}>Add Warning Level</Text>
                             </TouchableOpacity>
 
                             <TouchableOpacity onPress={handleUpdateConfigLight} style={styles.updateButton}>
-                                <Text style={styles.updateButtonText}>Lưu cập nhật</Text>
+                                <Text style={styles.updateButtonText}>Save Update</Text>
                             </TouchableOpacity>
                         </>
                     )}
                 </>
-            )
-            }
+            )}
         </View >
+
     );
 
     return (
-        <FlatList
-            style={styles.container}
-            data={[{ key: "content" }]}
-            renderItem={() => renderContent()}
-            keyExtractor={(item) => item.key}
-            ListFooterComponent={<View style={{ height: 20 }} />}
-        />
+        <>
+            <FlatList
+                style={styles.container}
+                data={[{ key: "content" }]}
+                renderItem={() => renderContent()}
+                keyExtractor={(item) => item.key}
+                ListFooterComponent={<View style={{ height: 20 }} />}
+            />
+            {/* {loading && <LoadingOverlay />} */}
+        </>
     );
 };
 

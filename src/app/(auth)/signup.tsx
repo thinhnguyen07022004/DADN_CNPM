@@ -16,7 +16,6 @@ const styles = StyleSheet.create({
         gap: 10,
         marginHorizontal: 20
     },
-
 })
 
 const SignUpPage = () => {
@@ -31,9 +30,8 @@ const SignUpPage = () => {
         try {
             setLoading(true);
             const res = await registerAPI(phoneNumber, password, name);
-            setLoading(false);
             if (res && res.error) {
-                Toast.show("Số điện thoại đã được đăng ký", {
+                Toast.show(res.message, {
                     duration: Toast.durations.LONG,
                     textColor: "#fff",
                     backgroundColor: "red",
@@ -41,31 +39,33 @@ const SignUpPage = () => {
                 });
                 return;
             };
-            if (res) {
-                setAppState(res)
+            if (res && res.data) {
+                setAppState(res.data)
                 router.navigate("/(auth)/verify")
-                Toast.show("Đăng ký thành công", {
+                Toast.show("Registration Successful", {
                     duration: Toast.durations.LONG,
                     textColor: "#fff",
                     backgroundColor: APP_COLOR.GREEN,
                     opacity: 1,
                 });
             } else {
-                Toast.show("Đăng ký thất bại", {
+                Toast.show("Registration Failed", {
                     duration: Toast.durations.LONG,
                     textColor: "#fff",
                     backgroundColor: "red",
                     opacity: 1,
                 });
             }
-
         } catch (error) {
-            Toast.show("Đăng ký thất bại", {
+            Toast.show("Registration Failed", {
                 duration: Toast.durations.LONG,
                 textColor: "#fff",
                 backgroundColor: "red",
                 opacity: 1,
             });
+        }
+        finally {
+            setLoading(false);
         }
     }
 
@@ -78,27 +78,27 @@ const SignUpPage = () => {
                         fontWeight: 600,
                         marginVertical: 30
                     }}
-                    >Đăng ký tài khoản</Text>
+                    >SIGN UP</Text>
                 </View>
                 <ShareInput
-                    title="Họ tên"
+                    title="Full name"
                     value={name}
                     setValue={setName}
                 />
                 <ShareInput
-                    title="Số điện thoại"
+                    title="Phone Number"
                     value={phoneNumber}
                     setValue={setPhoneNumber}
                 />
                 <ShareInput
-                    title="Mật khẩu"
+                    title="PassWord"
                     secureTextEntry={true}
                     value={password}
                     setValue={setPassword}
                 />
                 <View style={{ marginVertical: 10 }}></View>
                 <ShareButton
-                    title="Đăng Ký"
+                    title="Sign Up"
                     onPress={() => handleSignUp()}
                     textStyle={{
                         textTransform: "uppercase",
@@ -125,7 +125,7 @@ const SignUpPage = () => {
                         textAlign: "center",
                         color: "black"
                     }}>
-                        Đã có tài khoản?
+                        Already have an account?
                     </Text>
                     <Link href={"/(auth)/login"}>
                         <Text style={{
@@ -133,13 +133,13 @@ const SignUpPage = () => {
                             color: APP_COLOR.GREEN,
                             textDecorationLine: "underline"
                         }}>
-                            Đăng nhập.
+                            Sign In.
                         </Text>
                     </Link>
                 </View>
 
                 <SocialButton
-                    title="Đăng ký với" />
+                    title="Sign up with" />
             </View>
         </SafeAreaView>
     )

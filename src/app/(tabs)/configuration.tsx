@@ -16,10 +16,9 @@ const styles = StyleSheet.create({
         gap: 10,
         marginHorizontal: 20
     },
-
 })
 
-const ConfigPage = () => {
+const ConfigurationPage = () => {
     const { config } = useCurrentApp()
     const { appState } = useCurrentApp()
     const [iotName, setIotName] = useState<string>("");
@@ -31,18 +30,16 @@ const ConfigPage = () => {
             if (appState?.id) {
                 setLoading(true);
                 const res = await addConfigAPI(appState.id, iotName, iotApiKey);
-                setLoading(false);
-
-                if (res) {
+                if (res && res.data) {
                     router.navigate("/(tabs)")
-                    Toast.show("Cấu hình thành công", {
+                    Toast.show("Configuration Successfully", {
                         duration: Toast.durations.LONG,
                         textColor: "#fff",
                         backgroundColor: APP_COLOR.GREEN,
                         opacity: 1,
                     });
                 } else {
-                    Toast.show("Cấu hình thất bại", {
+                    Toast.show("Configuration Failed", {
                         duration: Toast.durations.LONG,
                         textColor: "#fff",
                         backgroundColor: "red",
@@ -52,12 +49,15 @@ const ConfigPage = () => {
             }
         }
         catch (error) {
-            Toast.show("Đăng nhập thất bại", {
+            Toast.show("Configuration Failed", {
                 duration: Toast.durations.LONG,
                 textColor: "#fff",
                 backgroundColor: "red",
                 opacity: 1,
             });
+        }
+        finally {
+            setLoading(false);
         }
     }
     return (
@@ -69,7 +69,7 @@ const ConfigPage = () => {
                         fontWeight: 600,
                         marginVertical: 30
                     }}
-                    >Cấu hình thông tin thiết bị</Text>
+                    >Device Information Configuration</Text>
                 </View>
                 <ShareInput
                     title="userId"
@@ -93,7 +93,7 @@ const ConfigPage = () => {
                 {appState?.id && !config?.iotName && !config?.iotApiKey
                     ?
                     <ShareButton
-                        title="Xác nhận"
+                        title="Configuration"
                         onPress={() => handleVerify()}
                         textStyle={{
                             textTransform: "uppercase",
@@ -119,4 +119,4 @@ const ConfigPage = () => {
     )
 }
 
-export default ConfigPage
+export default ConfigurationPage

@@ -15,11 +15,10 @@ type AppRoutes =
 
 interface GridItem {
     id: string;
-    iconName: React.ComponentProps<typeof FontAwesome5>['name']; // Icon name chuẩn FontAwesome5
+    iconName: React.ComponentProps<typeof FontAwesome5>['name']
     label: string;
     href: Href<AppRoutes>;
 }
-
 
 const gridItems: GridItem[] = [
     { id: "1", iconName: "remote", label: "Remote Control", href: "/remote-control" },

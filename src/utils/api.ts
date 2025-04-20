@@ -4,29 +4,29 @@ import { AxiosResponse } from "axios";
 //! Authenticate API
 const registerAPI = ( phoneNumber: string, password: string, name: string) => {
     const url = `${process.env.EXPO_PUBLIC_API_URL}/auth/signup`;
-    return axios.post<IRegister>(url, { phoneNumber, password, name });
+    return axios.post<IBackendRes<IRegister>>(url, { phoneNumber, password, name });
 }
 
 const logInAPI = ( phoneNumber: string, password: string) => {
     const url = `${process.env.EXPO_PUBLIC_API_URL}/auth/login`;
-    return axios.post<ILogin>(url, { phoneNumber, password });
+    return axios.post<IBackendRes<ILogin>>(url, { phoneNumber, password });
 }
 
 //! Config API
 const getConfigAPI = ( userId: string) => {
     const url = `${process.env.EXPO_PUBLIC_API_URL}/config`;
-    return axios.get<IConfig>(url, { params: { userId } });
+    return axios.get<IBackendRes<IConfig>>(url, { params: { userId } });
 }
 
 const addConfigAPI = ( userId: string, iotName: string, iotApiKey: string) => {
     const url = `${process.env.EXPO_PUBLIC_API_URL}/config`;
-    return axios.post<IConfig>(url, { userId, iotName, iotApiKey });
+    return axios.post<IBackendRes<IConfig>>(url, { userId, iotName, iotApiKey });
 }
 
 //! DOOR API
 const getDoorAPI = ( configId: string ) => {
     const url = `${process.env.EXPO_PUBLIC_API_URL}/door`;
-    return axios.get<IDoor>(url, { params: { configId } });
+    return axios.get<IBackendRes<IDoor>>(url, { params: { configId } });
 }
 
 const updateDoorAPI = (
@@ -35,7 +35,7 @@ const updateDoorAPI = (
     ) => {
     const url = `${process.env.EXPO_PUBLIC_API_URL}/door`;
 
-    return axios.patch<IDoor>(url, {
+    return axios.patch<IBackendRes<IDoor>>(url, {
         configId,
         doorPassword,
     });
@@ -44,17 +44,16 @@ const updateDoorAPI = (
 //! FAN API
 const getFanAPI = ( configId: string ) => {
     const url = `${process.env.EXPO_PUBLIC_API_URL}/fan`;
-    return axios.get<IFan>(url, { params: { configId } });
+    return axios.get<IBackendRes<IFan>>(url, { params: { configId } });
 }
 
 const updateFanAPI = (
     configId: string,
     controlledMode: string,
-    fanOns: FanOn[]
+    fanOns: IFanOnAPI[]
     ) => {
     const url = `${process.env.EXPO_PUBLIC_API_URL}/fan`;
-
-    return axios.patch<IConfig>(url, {
+    return axios.patch<IBackendRes<IConfig>>(url, {
         configId,
         controlledMode,
         fanOns,
@@ -64,7 +63,7 @@ const updateFanAPI = (
 //! LIGHT API
 const getLightAPI = ( configId: string ) => {
     const url = `${process.env.EXPO_PUBLIC_API_URL}/light`;
-    return axios.get<IFan>(url, { params: { configId } });
+    return axios.get<IBackendRes<ILight>>(url, { params: { configId } });
 }
 
 const updateLightAPI = (
@@ -72,7 +71,7 @@ const updateLightAPI = (
     controlledMode: string,
     onTime: string,
     offTime: string,
-    lightsOns: lightOns[]
+    lightOns: lightOns[]
     ) => {
     const url = `${process.env.EXPO_PUBLIC_API_URL}/light`;
 
@@ -81,7 +80,7 @@ const updateLightAPI = (
         controlledMode,
         onTime,
         offTime,
-        lightsOns,
+        lightOns,
     });
 };
 
@@ -89,17 +88,17 @@ const updateLightAPI = (
 
 const getMistingAPI = ( configId: string ) => {
     const url = `${process.env.EXPO_PUBLIC_API_URL}/misting`;
-    return axios.get<IFan>(url, { params: { configId } });
+    return axios.get<IBackendRes<IMisting>>(url, { params: { configId } });
 }
 
 const updateMistingAPI = (
     configId: string,
     controlledMode: string,
-    mistingOns: lightOns[]
+    mistingOns: mistingOns[]
     ) => {
-    const url = `${process.env.EXPO_PUBLIC_API_URL}/light`;
+    const url = `${process.env.EXPO_PUBLIC_API_URL}/misting`;
 
-    return axios.patch<IConfig>(url, {
+    return axios.patch<IMistingConfig>(url, {
         configId,
         controlledMode,
         mistingOns,

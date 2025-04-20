@@ -5,7 +5,7 @@ import { useCurrentApp } from "@/context/app.context"
 import { getConfigAPI, logInAPI } from "@/utils/api"
 import { APP_COLOR } from "@/utils/constant"
 import { Link, router } from "expo-router"
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { StyleSheet, Text, View } from "react-native"
 import Toast from "react-native-root-toast"
 import { SafeAreaView } from "react-native-safe-area-context"
@@ -16,50 +16,49 @@ const styles = StyleSheet.create({
         gap: 10,
         marginHorizontal: 20
     },
-
 })
 
 const Login = () => {
     const [phoneNumber, setPhoneNumber] = useState<string>("");
     const [password, setPassword] = useState<string>("");
     const [loading, setLoading] = useState<boolean>(false);
-    const { appState, setAppState, setConfig } = useCurrentApp()
-
+    const { setAppState, setConfig } = useCurrentApp()
 
     const handleLogin = async () => {
         try {
             setLoading(true);
             const res = await logInAPI(phoneNumber, password);
-            setLoading(false);
-            if (res) {
-                setAppState(res)
-                const config = await getConfigAPI(res.id);
-                if (config) {
-                    setConfig(config);
+            if (res.data && res.data.id) {
+                setAppState(res.data)
+                const config = await getConfigAPI(res.data.id);
+                if (config.data) {
+                    setConfig(config.data);
                 }
                 router.navigate("/(tabs)")
-                Toast.show("Đăng nhập thành công", {
+                Toast.show("Login successful", {
                     duration: Toast.durations.LONG,
                     textColor: "#fff",
                     backgroundColor: APP_COLOR.GREEN,
                     opacity: 1,
                 });
             } else {
-                Toast.show("Đăng nhập thất bại", {
+                Toast.show("Login failed", {
                     duration: Toast.durations.LONG,
                     textColor: "#fff",
                     backgroundColor: "red",
                     opacity: 1,
                 });
             }
-
         } catch (error) {
-            Toast.show("Đăng nhập thất bại", {
+            Toast.show("Login failed", {
                 duration: Toast.durations.LONG,
                 textColor: "#fff",
                 backgroundColor: "red",
                 opacity: 1,
             });
+        }
+        finally {
+            setLoading(false);
         }
     }
 
@@ -75,15 +74,15 @@ const Login = () => {
                         fontWeight: 600,
                         marginVertical: 30
                     }}
-                    >Đăng nhập</Text>
+                    >SIGN IN</Text>
                 </View>
                 <ShareInput
-                    title="Số điện thoại"
+                    title="Phone Number"
                     value={phoneNumber}
                     setValue={setPhoneNumber}
                 />
                 <ShareInput
-                    title="Mật khẩu"
+                    title="PassWord"
                     secureTextEntry={true}
                     value={password}
                     setValue={setPassword}
@@ -91,7 +90,7 @@ const Login = () => {
                 <View style={{ marginVertical: 10 }}></View>
                 <ShareButton
                     loading={loading}
-                    title="Đăng nhập"
+                    title="Sign In"
                     onPress={() => handleLogin()}
                     textStyle={{
                         textTransform: "uppercase",
@@ -118,7 +117,7 @@ const Login = () => {
                         textAlign: "center",
                         color: "black"
                     }}>
-                        Chưa có tài khoản?
+                        Don't have an account?
                     </Text>
                     <Link href={"/(auth)/signup"}>
                         <Text style={{
@@ -126,13 +125,13 @@ const Login = () => {
                             color: APP_COLOR.GREEN,
                             textDecorationLine: "underline"
                         }}>
-                            Đăng ký.
+                            Sign Up.
                         </Text>
                     </Link>
                 </View>
 
                 <SocialButton
-                    title="Đăng nhập với" />
+                    title="Sign in with" />
             </View>
         </SafeAreaView>
     )

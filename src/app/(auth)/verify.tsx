@@ -3,7 +3,7 @@ import ShareInput from "@/components/input/share.input"
 import { useCurrentApp } from "@/context/app.context"
 import { addConfigAPI } from "@/utils/api"
 import { APP_COLOR } from "@/utils/constant"
-import { Link, router } from "expo-router"
+import { router } from "expo-router"
 import { useState } from "react"
 import { StyleSheet, Text, View } from "react-native"
 import Toast from "react-native-root-toast"
@@ -15,12 +15,10 @@ const styles = StyleSheet.create({
         gap: 10,
         marginHorizontal: 20
     },
-
 })
 
 const VerifyPage = () => {
     const { appState } = useCurrentApp()
-    const [userId, setUserId] = useState<string>("");
     const [iotName, setIotName] = useState<string>("");
     const [iotApiKey, setIotApiKey] = useState<string>("");
     const [loading, setLoading] = useState<boolean>(false);
@@ -30,17 +28,16 @@ const VerifyPage = () => {
             if (appState?.id) {
                 setLoading(true);
                 const res = await addConfigAPI(appState.id, iotName, iotApiKey);
-                setLoading(false);
                 if (res) {
                     router.navigate("/(auth)/login")
-                    Toast.show("Cấu hình thành công", {
+                    Toast.show("Configuration Successful", {
                         duration: Toast.durations.LONG,
                         textColor: "#fff",
                         backgroundColor: APP_COLOR.GREEN,
                         opacity: 1,
                     });
                 } else {
-                    Toast.show("Cấu hình thất bại", {
+                    Toast.show("Configuration Failed", {
                         duration: Toast.durations.LONG,
                         textColor: "#fff",
                         backgroundColor: "red",
@@ -50,14 +47,18 @@ const VerifyPage = () => {
             }
         }
         catch (error) {
-            Toast.show("Cấu hình thất bại", {
+            Toast.show("Configuration failed", {
                 duration: Toast.durations.LONG,
                 textColor: "#fff",
                 backgroundColor: "red",
                 opacity: 1,
             });
         }
+        finally {
+            setLoading(false);
+        }
     }
+
     return (
         <SafeAreaView style={{ flex: 1 }}>
             <View style={styles.contanier}>
@@ -67,7 +68,7 @@ const VerifyPage = () => {
                         fontWeight: 600,
                         marginVertical: 30
                     }}
-                    >Cấu hình Adafruit</Text>
+                    >Configuration Adafruit</Text>
                 </View>
                 <ShareInput
                     title="userId"
@@ -86,7 +87,7 @@ const VerifyPage = () => {
                 />
                 <View style={{ marginVertical: 10 }}></View>
                 <ShareButton
-                    title="Xác nhận"
+                    title="Configuration"
                     onPress={() => handleVerify()}
                     textStyle={{
                         textTransform: "uppercase",

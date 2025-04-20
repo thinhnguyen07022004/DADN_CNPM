@@ -26,6 +26,7 @@ interface IProps {
 }
 const HomeTitle = (props: IProps) => {
     const { title, subTitle, color = "white" } = props
+
     return (
         <View style={styles.container}>
             <Text style={[styles.body, { color }]}>{title}</Text>

@@ -1,12 +1,11 @@
 import { useCurrentApp } from "@/context/app.context"
-import { Image, Platform, Text, View } from "react-native"
+import { Image, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import avatar from "@/assets/auth/avatar-icon-6.jpg"
 import ShareInput from "@/components/input/share.input"
 
 const AccountPage = () => {
     const { appState, config } = useCurrentApp()
-
 
     return (
         <SafeAreaView style={{ flex: 1 }}>
@@ -16,11 +15,11 @@ const AccountPage = () => {
                         style={{ width: 150, height: 150 }}
                         source={avatar}
                     />
-                    {/* <Text>{appState?.name}</Text> */}
                 </View>
+
                 <View style={{ marginTop: 20, gap: 20 }}>
                     <ShareInput
-                        title="Họ và tên"
+                        title="Full Name"
                         value={appState?.name}
                         disabled={true}
                     />
@@ -35,7 +34,7 @@ const AccountPage = () => {
                         disabled={true}
                     />
                     <ShareInput
-                        title="Số điện thoại"
+                        title="Phone Number"
                         value={appState?.phoneNumber?.toString()}
                         disabled={true}
                     />

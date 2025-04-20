@@ -12,12 +12,10 @@ const AppContext = createContext<AppContextType | null>(null);
 
 interface IProps {
     children: React.ReactNode;
-
 }
 
 export const useCurrentApp = () => {
     const currentTheme = useContext(AppContext);
-
     if (!currentTheme) {
         throw new Error(
             "useCurrentApp has to be used within <AppContext.Provider>"

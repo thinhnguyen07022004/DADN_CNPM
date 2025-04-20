@@ -1,8 +1,11 @@
 
 export {};
 declare global {
-    interface IBackendRes {
-        
+    interface IBackendRes<T> {
+        error?: string | string[];
+        message: string;
+        statusCode: number | string;
+        data?: T;
     }
 
     interface IRegister {
@@ -12,7 +15,6 @@ declare global {
         _id: string,
         createdAt: string,
         updatedAt: string,
-        error?: string | string[];
     }
 
     interface ILogin {
@@ -55,25 +57,67 @@ declare global {
                 threshold: number,
                 _id: string
             },
+        ],
+        createdAt: string,
+        updatedAt: string,
+    }
+
+    interface IFanOnAPI {
+        intensity: string;
+        threshold: string;
+    }
+
+    interface ILight {
+        _id: string,
+        deviceId: string,
+        configId: string,
+        controlledMode: string,
+        lightOns: [
             {
-                intensity: number,
+                color: string,
                 threshold: number,
                 _id: string
             }
         ],
         createdAt: string,
         updatedAt: string,
+        offTime: string,
+        onTime: string
     }
 
-    interface FanOn {
-        intensity: string;
-        threshold: string;
+    interface IMisting {
+        _id: string,
+        deviceId: string,
+        configId: string,
+        controlledMode: string,
+        mistingOns: [
+            {
+                intensity: number,
+                tempThreshold: number,
+                moistureThreshold: number,
+                _id: string
+            }
+        ],
+        createdAt: string,
+        updatedAt: string,
     }
     
     interface IConfig {
         configId: string;
         controlledMode: string;
         fanOns: FanOn[];
+    }
+
+    interface IMistingConfig {
+        configId: string,
+        controlledMode: string,
+        mistingOns: [
+            {
+                intensity: string,
+                tempThreshold: string,
+                moistureThreshold: string
+            },
+        ]
     }
 
     interface IDoor {
@@ -83,6 +127,8 @@ declare global {
         configId: string;
         createdAt: string;
         updatedAt: string;
+        formattedCreatedAt?: string;
+        formattedExpiration?: string;
     }
 
     interface lightOns {

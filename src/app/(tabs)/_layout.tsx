@@ -1,8 +1,6 @@
 import { Tabs } from "expo-router"
-import Octions from '@expo/vector-icons/Octicons';
 import { APP_COLOR } from "@/utils/constant";
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
-import Entypo from '@expo/vector-icons/Entypo';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 
@@ -18,14 +16,6 @@ const TabLayout = () => {
                 />
             )
         }
-
-        // if (routeName === "lock") {
-        //     return (focused ?
-        //         <Entypo name="lock-open" size={size} color={APP_COLOR.GREEN} />
-        //         :
-        //         <Entypo name="lock" size={size} color={APP_COLOR.GREY} />
-        //     )
-        // }
 
         if (routeName === "configuration") {
             return (focused ?
@@ -64,13 +54,6 @@ const TabLayout = () => {
                     title: "Home"
                 }}
             />
-
-            {/* <Tabs.Screen
-                name="lock"
-                options={{
-                    title: "Lock"
-                }}
-            /> */}
 
             <Tabs.Screen
                 name="configuration"

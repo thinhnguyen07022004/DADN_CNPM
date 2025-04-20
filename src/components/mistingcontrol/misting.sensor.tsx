@@ -3,16 +3,16 @@ import { View, Text, StyleSheet } from 'react-native';
 import Svg, { Rect, Defs, LinearGradient, Stop } from 'react-native-svg';
 
 interface ThermometerProps {
-    lightSensor: number;
+    mistingSensor: number;
     min?: number;
     max?: number;
 }
 
-const LightSensor: React.FC<ThermometerProps> = ({ lightSensor, min = 0, max = 100 }) => {
-    const height = 300;
+const MistingSensor: React.FC<ThermometerProps> = ({ mistingSensor, min = 0, max = 100 }) => {
+    const height = 200;
     const width = 10;
 
-    const validTemp = isNaN(lightSensor) || lightSensor === undefined ? min : lightSensor;
+    const validTemp = isNaN(mistingSensor) || mistingSensor === undefined ? min : mistingSensor;
 
     const clampedTemp = Math.max(min, Math.min(max, validTemp));
 
@@ -21,7 +21,7 @@ const LightSensor: React.FC<ThermometerProps> = ({ lightSensor, min = 0, max = 1
 
     return (
         <View style={styles.container}>
-            <Text style={styles.tempText}>{clampedTemp}%</Text>
+            <Text style={styles.tempText}>{clampedTemp} RH</Text>
             <Svg height={height} width={width}>
                 <Defs>
                     <LinearGradient id="grad" x1="0" y1="1" x2="0" y2="0">
@@ -68,4 +68,4 @@ const styles = StyleSheet.create({
     },
 });
 
-export default LightSensor;
+export default MistingSensor;

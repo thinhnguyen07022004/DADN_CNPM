@@ -1,159 +1,188 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, Keyboard } from 'react-native';
-import { APP_COLOR } from '@/utils/constant';
-import OTPTextView from 'react-native-otp-textinput';
-import LoadingOverlay from '@/components/loading/overlay';
-import { useCurrentApp } from '@/context/app.context';
-import { getDoorAPI, remoteControllerAPI, updatePasswordAPI } from '@/utils/api';
-import Toast from 'react-native-root-toast';
-import { router } from 'expo-router';
-import ShareButton from '@/components/button/share.button';
+import React, { useEffect, useState } from "react";
+import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import Toast from "react-native-root-toast";
+import { useCurrentApp } from "@/context/app.context";
+import { getDoorAPI, remoteControllerAPI, updatePasswordAPI } from "@/utils/api";
+import { APP_COLOR } from "@/utils/constant";
+import LoadingOverlay from "@/components/loading/overlay";
 
-const RemoteControlPage = () => {
-    const { config } = useCurrentApp()
-    const [isSubmit, setIsSubmit] = useState(false);
-    const [doorPassword, setDoorPassword] = useState('');
-    const [otp, setOtp] = useState('');
-    const [error, setError] = useState<string | null>(null);
-    const otpRef = useRef<OTPTextView>(null);
+const RemoteControlScreen = () => {
+    const { config } = useCurrentApp();
+    const [loading, setLoading] = useState(false);
+    const [doorData, setDoorData] = useState<IDoor | undefined>();
+    const [passWord, setPassWord] = useState("");
+
+
+    const formatFeedData = (data: IDoor): IDoor => ({
+        ...data,
+        formattedCreatedAt: new Date(data.createdAt).toLocaleString(),
+        formattedExpiration: new Date(data.updatedAt).toLocaleString(),
+    });
+
+    const showToast = (message: string, isError = false) =>
+        Toast.show(message, {
+            duration: Toast.durations.LONG,
+            textColor: "#fff",
+            backgroundColor: isError ? "red" : APP_COLOR.GREEN,
+            opacity: 1,
+        });
 
     useEffect(() => {
         const fetchDoorData = async () => {
+            setLoading(true);
+            if (!config?.id || !config?.iotApiKey || !config?.iotName) {
+                showToast("Account not configured", true);
+                setLoading(false);
+                return;
+            }
             try {
-                if (!config?.id || !config?.iotApiKey || !config?.iotName) {
-                    router.navigate("/(tabs)/configuration")
-                    Toast.show("Người dùng chưa cấu hình tài khoản", {
-                        duration: Toast.durations.LONG,
-                        textColor: "#fff",
-                        backgroundColor: "red",
-                        opacity: 1,
-                    });
-                    return;
-                }
-                setIsSubmit(true);
-                const response = await getDoorAPI(config?.id);
-                // @ts-ignore:next-line
-                const doorData = response[0]
-                // console.log(">>>check response", doorData);
-                setDoorPassword(doorData?.doorPassword);
-                // console.log(">>>check response doorPassword", doorPassword);
-                if (!response?.doorPassword) {
-                    const res = await updatePasswordAPI(doorPassword, config?.iotName, config?.iotApiKey);
-                    // console.log(">>>check updatePasswordAPI", res);
+                const res = await getDoorAPI(config.id);
+                if (res && res.data && Array.isArray(res.data) && res.data.length > 0) {
+                    const formattedData = formatFeedData(res.data[0]);
+                    setDoorData(formattedData);
+                    setPassWord(formattedData.doorPassword || "");
+                    if (!formattedData.doorPassword) {
+                        showToast("No door password set", true);
+                        return;
+                    }
+                    try {
+                        const res = await updatePasswordAPI(formattedData.doorPassword, config.iotName, config.iotApiKey);
+                    } catch (apiError) {
+                        showToast("Failed to update password", true);
+                    }
                 } else {
-                    Toast.show("Người dùng chưa thêm dữ liệu cửa và hệ thốngthống", {
-                        duration: Toast.durations.LONG,
-                        textColor: "#fff",
-                        backgroundColor: "red",
-                        opacity: 1,
-                    });
+                    showToast("No door data found", true);
                 }
             } catch (err) {
-                Toast.show("Người dùng chưa thêm dữ liệu cửa và hệ thốngthống", {
-                    duration: Toast.durations.LONG,
-                    textColor: "#fff",
-                    backgroundColor: "red",
-                    opacity: 1,
-                });
-                console.error(err);
+                showToast("Failed to load door data", true);
             } finally {
-                setIsSubmit(false);
+                setLoading(false);
             }
         };
-
         fetchDoorData();
-    }, []);
+    }, [config?.id, config?.iotApiKey, config?.iotName]);
 
-    const handleSubmit = async () => {
-        if (!config?.id || !config?.iotApiKey || !config?.iotName) {
-            Toast.show("Người dùng chưa cấu hình tài khoản", {
+    const handleButtonPress = async (value: string, action: string) => {
+        if (!config?.iotName || !config?.iotApiKey) {
+            Toast.show("User has not configured account.", {
                 duration: Toast.durations.LONG,
                 textColor: "#fff",
                 backgroundColor: "red",
                 opacity: 1,
             });
-            router.navigate("/(tabs)/configuration")
             return;
         }
+
+        setLoading(true);
         try {
-            setIsSubmit(true);
-            const res = await remoteControllerAPI(otp, config?.iotName, config?.iotApiKey);
-            console.log(">>>check remoteControllerAPI", res);
-            Keyboard.dismiss();
-            setOtp('');
-            Toast.show("Gửi tín hiệu thành công", {
+            await remoteControllerAPI(value, config.iotName, config.iotApiKey);
+            Toast.show(`Command sent successfully: ${action}`, {
                 duration: Toast.durations.LONG,
                 textColor: "#fff",
-                backgroundColor: APP_COLOR.GREEN,
+                backgroundColor: "#4CAF50",
                 opacity: 1,
             });
-        } catch (err) {
-            Toast.show("Không thể gửi tín hiệu đi", {
+        } catch (err: any) {
+            Toast.show(`Error sending command: ${err.message}`, {
                 duration: Toast.durations.LONG,
                 textColor: "#fff",
                 backgroundColor: "red",
                 opacity: 1,
             });
-            console.error(err);
         } finally {
-            otpRef.current?.clear();
-            setIsSubmit(false);
+            setLoading(false);
         }
     };
 
     return (
-        <>
-            <View style={styles.container}>
-                <Text style={styles.heading}>Remote Control</Text>
-                <OTPTextView
-                    ref={otpRef}
-                    handleTextChange={setOtp}
-                    inputCount={6}
-                    inputCellLength={1}
-                    tintColor={APP_COLOR.GREEN}
-                    textInputStyle={{
-                        borderWidth: 1,
-                        borderColor: APP_COLOR.GREY,
-                        borderBottomWidth: 1,
-                        borderRadius: 5,
-                        // @ts-ignore:next-line
-                        color: APP_COLOR.GREEN,
-                    }}
-                />
-            </View>
-            <ShareButton
-                loading={isSubmit}
-                title="Sent"
-                onPress={() => handleSubmit()}
-                textStyle={{
-                    textTransform: "uppercase",
-                    color: "#fff",
-                    paddingVertical: 5
-                }}
-                buttonStyle={{
-                    justifyContent: "center",
-                    borderRadius: 30,
-                    marginHorizontal: 50,
-                    paddingHorizontal: 10,
-                    backgroundColor: APP_COLOR.GREEN,
-                }}
-                pressStyle={{ alignSelf: "stretch" }}
-            />
-            {isSubmit && <LoadingOverlay />}
-        </>
+        <View style={styles.container}>
+            <Text style={styles.title}>Remote Control</Text>
+
+            <TouchableOpacity
+                style={[styles.button, { backgroundColor: APP_COLOR.GREEN }]}
+                onPress={() => handleButtonPress("1", "Show light")}
+                disabled={loading}
+            >
+                <Text style={styles.buttonText}>Show Light</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+                style={[styles.button, { backgroundColor: "#FF5722" }]}
+                onPress={() => handleButtonPress("2", "Show temperature")}
+                disabled={loading}
+            >
+                <Text style={styles.buttonText}>Show Temperature</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+                style={[styles.button, { backgroundColor: "#2196F3" }]}
+                onPress={() => handleButtonPress("3", "Show door password")}
+                disabled={loading}
+            >
+                <Text style={styles.buttonText}>Show Door Password</Text>
+            </TouchableOpacity>
+            {loading && <LoadingOverlay />}
+        </View>
     );
 };
 
 const styles = StyleSheet.create({
     container: {
-        paddingVertical: 30,
-        paddingHorizontal: 20,
+        flex: 1,
+        padding: 16,
+        backgroundColor: "#F5F5F5",
+        alignItems: "center",
     },
-    heading: {
-        fontSize: 25,
+    title: {
+        fontSize: 24,
+        fontWeight: "bold",
+        color: "#333",
+        marginBottom: 32,
+    },
+    button: {
+        width: "80%",
+        paddingVertical: 15,
+        borderRadius: 10,
+        alignItems: "center",
+        marginBottom: 20,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
+        elevation: 3,
+    },
+    buttonText: {
+        fontSize: 18,
         fontWeight: "600",
-        marginVertical: 20,
-    }
+        color: "#fff",
+    },
+    card: {
+        backgroundColor: "#FFFFFF",
+        borderRadius: 12,
+        padding: 12,
+        marginHorizontal: 16,
+        marginBottom: 12,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 3,
+        width: "90%",
+    },
+    infoRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        backgroundColor: "#F8F8F8",
+        borderRadius: 8,
+        padding: 8,
+        marginBottom: 8,
+    },
+    icon: { width: 30, textAlign: "center" },
+    infoLabel: { flex: 1, fontSize: 14, color: "#555" },
+    infoValueBlue: { fontSize: 16, fontWeight: "bold", color: APP_COLOR.ORANGE },
+    infoValueGreen: { fontSize: 16, fontWeight: "bold", color: "#388E3C" },
+    loader: { marginTop: 20 },
+    noDataText: { fontSize: 16, color: "#555", textAlign: "center", marginVertical: 20 },
 });
 
-export default RemoteControlPage;
+export default RemoteControlScreen;

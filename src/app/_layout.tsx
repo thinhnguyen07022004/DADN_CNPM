@@ -26,6 +26,10 @@ const RootLayout = () => {
                             options={{ headerShown: false }} />
 
                         <Stack.Screen
+                            name="(auth)/login"
+                            options={{ headerShown: false }} />
+
+                        <Stack.Screen
                             name="(auth)/signup"
                             options={{ headerShown: false }} />
 
@@ -92,10 +96,6 @@ const RootLayout = () => {
                                 headerTitle: () => <HomeHeader />,
                             }}
                         />
-
-                        <Stack.Screen
-                            name="(auth)/login"
-                            options={{ headerShown: false }} />
                     </Stack>
                 </AppProvider>
             </GestureHandlerRootView>

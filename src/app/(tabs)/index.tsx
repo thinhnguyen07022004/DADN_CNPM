@@ -5,12 +5,8 @@ import bg from "@/assets/home/background_app.png";
 import HomeHeader from "@/components/home/home.header";
 import HomeTopList from "@/components/home/home.top.list";
 import HomeTitle from "@/components/home/home.items";
-import { useEffect } from "react";
-import { useCurrentApp } from "@/context/app.context";
-import { getConfigAPI } from "@/utils/api";
 
 const HomeTab = () => {
-
     return (
         <ImageBackground source={bg} style={{ flex: 1 }}>
             <SafeAreaView style={styles.container}>
