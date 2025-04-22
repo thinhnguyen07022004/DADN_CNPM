@@ -21,7 +21,7 @@ const MistingSensor: React.FC<ThermometerProps> = ({ mistingSensor, min = 0, max
 
     return (
         <View style={styles.container}>
-            <Text style={styles.tempText}>{clampedTemp} RH</Text>
+            <Text style={styles.tempText}>{clampedTemp} %</Text>
             <Svg height={height} width={width}>
                 <Defs>
                     <LinearGradient id="grad" x1="0" y1="1" x2="0" y2="0">

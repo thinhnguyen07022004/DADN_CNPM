@@ -123,6 +123,7 @@ const DoorDataPage = () => {
         }
         try {
             const res = await remoteControllerAPI(value, config.iotName, config.iotApiKey);
+            console.log(">>>>>check",)
             return true;
         } catch (err: any) {
             showToast(`API request failed: ${err.message}`, true);
@@ -198,9 +199,14 @@ const DoorDataPage = () => {
     };
 
     const handleNewPasswordChange = async (text: string) => {
-        setNewPassword(text);
         if (isUserInput && text.length > 0) {
+            setLoading(true)
             const success = await sendApiRequest(text[text.length - 1]);
+            setTimeout(() => {
+                setLoading(false)
+
+                setNewPassword(text);
+            }, 1500)
         }
         if (text.length === 6) {
             setActionLoading(true);

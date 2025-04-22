@@ -24,7 +24,7 @@ const HomeHeader = () => {
                 }}
                 source={iconFarm} />
             <Text style={styles.body}>
-                HiFarm
+                HiHome
             </Text>
         </View>
     )

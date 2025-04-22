@@ -74,11 +74,11 @@ const WelcomePage = () => {
                                 }}
                                 source={iconFarm} />
                             <Text style={styles.body}>
-                                HiFarm | Smart Farm Solution
+                                HiHome | Smart home Solution
                             </Text>
                         </View>
                         <Text style={styles.footer}>
-                            Smart Farm - High Efficiency - Cost Saving
+                            Smart home - High Efficiency - Cost Saving
                         </Text>
                     </View>
                     <View style={styles.welcomeButton}>

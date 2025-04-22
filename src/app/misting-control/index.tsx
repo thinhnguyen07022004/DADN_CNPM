@@ -93,17 +93,17 @@ const MistingControlScreen = () => {
                     setMistingLevel(newMistingLevel);
                     previousTemp.current = currentTemp;
                     previousMoisture.current = currentMoisture;
-                    Toast.show(
-                        newMistingLevel === 0
-                            ? `Turn off misting successfully!`
-                            : `Update misting with intensity ${newMistingLevel}%`,
-                        {
-                            duration: Toast.durations.LONG,
-                            textColor: "#fff",
-                            backgroundColor: APP_COLOR.GREEN,
-                            opacity: 1,
-                        }
-                    );
+                    // Toast.show(
+                    //     newMistingLevel === 0
+                    //         ? `Turn off misting successfully!`
+                    //         : `Update misting with intensity ${newMistingLevel}%`,
+                    //     {
+                    //         duration: Toast.durations.LONG,
+                    //         textColor: "#fff",
+                    //         backgroundColor: APP_COLOR.GREEN,
+                    //         opacity: 1,
+                    //     }
+                    // );
                 } catch (apiError: any) {
                     Toast.show(`Error when calling the misting API: ${apiError.message}`, {
                         duration: Toast.durations.LONG,
@@ -417,11 +417,11 @@ const MistingControlScreen = () => {
                                             keyboardType="numeric"
                                             value={item.moistureThreshold ? item.moistureThreshold.toString() : "0"}
                                             onChangeText={(text) => updateMistingOn(index, "moistureThreshold", text)}
-                                            placeholder="Threshold Humidity (RH)"
+                                            placeholder="Threshold Humidity (%)"
                                             placeholderTextColor="#B0BEC5"
                                         />
                                     ) : (
-                                        <Text style={styles.infoValueOrange}>{item.moistureThreshold} RH</Text>
+                                        <Text style={styles.infoValueOrange}>{item.moistureThreshold} %</Text>
                                     )}
                                 </View>
                                 <View style={styles.infoRow}>

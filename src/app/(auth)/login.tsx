@@ -30,9 +30,9 @@ const Login = () => {
             const res = await logInAPI(phoneNumber, password);
             if (res.data && res.data.id) {
                 setAppState(res.data)
-                const config = await getConfigAPI(res.data.id);
-                if (config.data) {
-                    setConfig(config.data);
+                const configdata = await getConfigAPI(res.data.id);
+                if (configdata && configdata.data) {
+                    setConfig(configdata.data);
                 }
                 router.navigate("/(tabs)")
                 Toast.show("Login successful", {

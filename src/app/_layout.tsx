@@ -48,12 +48,12 @@ const RootLayout = () => {
                             }}
                         />
 
-                        <Stack.Screen
+                        {/* <Stack.Screen
                             name="environment-status/index"
                             options={{
                                 headerTitle: () => <HomeHeader />,
                             }}
-                        />
+                        /> */}
 
                         <Stack.Screen
                             name="door/index"

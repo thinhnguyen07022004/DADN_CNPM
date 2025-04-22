@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "RN-smart-farm",
-    "slug": "RN-smart-farm",
+    "name": "RN-smart-home",
+    "slug": "RN-smart-home",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "././src/assets/icon.png",
@@ -24,7 +24,7 @@
     "web": {
       "favicon": "././src/assets/favicon.png"
     },
-    "scheme": "smart-farm-app",
+    "scheme": "smart-home-app",
     "plugins": [
     "expo-router"
     ],

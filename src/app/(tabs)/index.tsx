@@ -16,8 +16,8 @@ const HomeTab = () => {
                     renderItem={() => <HomeTopList />}
                     HeaderComponent={<HomeHeader />}
                     StickyElementComponent={<HomeTitle
-                        title="Welcome to HiFarm"
-                        subTitle="Your smart farm management system"
+                        title="Welcome to HiHome"
+                        subTitle="Your smart home management system"
                     />}
                     TopListElementComponent={<></>}
                 />

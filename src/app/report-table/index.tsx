@@ -111,8 +111,15 @@ const DataTablePage = () => {
             } finally {
                 setLoading(false);
             }
+
         };
         fetchData();
+
+        const interval = setInterval(() => {
+            fetchData();
+        }, 10000);
+
+        return () => clearInterval(interval);
     }, []);
 
     const loadMoreData = async () => {

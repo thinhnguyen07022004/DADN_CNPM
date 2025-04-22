@@ -24,6 +24,7 @@ declare global {
         name: string,
         createdAt: string,
         updatedAt: string,
+        configId: string
     }
 
     interface IConfig{
