@@ -20,14 +20,12 @@ cd FE_SmartHome_Mobile
 npm install hoặc yarn install
 3. Cập nhật file .env (nếu cần thiết)
 Tạo file .env tại thư mục gốc của dự án và thêm các biến môi trường như sau:
-
 EXPO_PUBLIC_API_URL=http://localhost:3001
 EXPO_PUBLIC_API_URL=http://10.0.2.2:3001
 EXPO_PUBLIC_ANDROID_API_URL=http://10.0.2.2:3001
 EXPO_PUBLIC_IOS_API_URL=http://localhost:3001
 EXPO_PUBLIC_ADAFRUIT_API_URL=https://io.adafruit.com/api/v2
 Ghi chú:
-
 Thay thế URL phù hợp với server backend bạn đang sử dụng.
 
 # 4. Chạy ứng dụng
