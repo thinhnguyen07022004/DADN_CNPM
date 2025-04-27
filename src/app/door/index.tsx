@@ -67,7 +67,6 @@ const DoorDataPage = () => {
     const updateDoorData = async () => {
         try {
             const res = await getDoorAPI(config!.id);
-            console.log("updateDoorData response:", JSON.stringify(res, null, 2));
             if (res && res.data && Array.isArray(res.data) && res.data.length > 0) {
                 const formattedData = formatFeedData(res.data[0]);
                 setDoorData(formattedData);
@@ -123,7 +122,6 @@ const DoorDataPage = () => {
         }
         try {
             const res = await remoteControllerAPI(value, config.iotName, config.iotApiKey);
-            console.log(">>>>>check",)
             return true;
         } catch (err: any) {
             showToast(`API request failed: ${err.message}`, true);
