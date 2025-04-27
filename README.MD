@@ -4,7 +4,7 @@ Smart Home Mobile là ứng dụng di động giúp người dùng giám sát v�
 # 🚀 Công nghệ sử dụng
 React Native (Expo)
 
-React Navigation - Điều hướng giữa các màn hình
+Expo Router - Điều hướng giữa các màn hình
 
 Axios - Giao tiếp với API backend
 
